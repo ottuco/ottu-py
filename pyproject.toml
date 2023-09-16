@@ -1,0 +1,60 @@
+[tool.black]
+line_length = 88
+force_exclude = """
+        (.github/*)
+    """
+
+[tool.isort]
+profile = "black"
+quiet = "True"
+skip_glob = ".github/*"
+skip_gitignore = "True"
+combine_as_imports = "True"
+line_length = 88
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ottu-py"
+version = "0.0.1"
+authors = [
+    { name = "Jerin Peter George", email = "jerinpetergeorge@gmail.com" },
+]
+description = "Helper classes for keycloak authentication in Django and FastAPI"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Environment :: Web Environment",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "requests<2.31.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "ottu-py",
+    "pytest-django~=4.5.2",
+    "tox"
+]
+lint-and-formatting = [
+    "black",
+    "flake8",
+    "flake8-print",
+    "isort",
+    "pre-commit",
+]
+dev = ["ottu-py[test, lint-and-formatting]", "bump2version~=1.0.1"]
+
+[project.urls]
+"Homepage" = "https://github.com/ottuco/ottu-py"
