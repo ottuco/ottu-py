@@ -107,9 +107,9 @@ class Ottu:
         path: str,
         method: str,
         **request_params,
-    ) -> typing.Optional[httpx.Response]:
-        method = getattr(self.request_session, method.lower())
-        return method(
+    ) -> httpx.Response:
+        func = getattr(self.request_session, method.lower())
+        return func(
             url=f"{self.host_url}{path}",
             **request_params,
         )

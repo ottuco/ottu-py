@@ -69,7 +69,7 @@ class SessionHandler:
         customer_id: typing.Optional[str] = None,
         customer_first_name: typing.Optional[str] = None,
         customer_last_name: typing.Optional[str] = None,
-    ) -> typing.Optional[Session]:
+    ) -> Session:
         """
         Creates a new checkout session.
         :param txn_type: Transaction type
@@ -116,7 +116,7 @@ class SessionHandler:
         customer_last_name: typing.Optional[str] = None,
     ):
         self.__validate_customer_id(customer_id)
-        payload = {}
+        payload: dict[str, typing.Union[str, list]] = {}
         if txn_type:
             payload["type"] = txn_type.value
         if amount:
