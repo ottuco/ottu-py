@@ -38,13 +38,14 @@ classifiers = [
     "Topic :: Utilities",
 ]
 dependencies = [
-    "requests<2.31.0",
+    "httpx~=0.25.0",
+    "pydantic~=2.3.0"
 ]
 
 [project.optional-dependencies]
 test = [
     "ottu-py",
-    "pytest-django~=4.5.2",
+    "pytest-django",
     "tox"
 ]
 lint-and-formatting = [
@@ -53,6 +54,7 @@ lint-and-formatting = [
     "flake8-print",
     "isort",
     "pre-commit",
+    "mypy"
 ]
 dev = ["ottu-py[test, lint-and-formatting]", "bump2version~=1.0.1"]
 
