@@ -15,3 +15,13 @@ class ConfigurationError(OttuBaseError):
 
 class ValidationError(OttuBaseError):
     ...
+
+
+class UpstreamBase(OttuBaseError):
+    def __init__(self, msg: str, status_code: int, **extra):
+        self.status_code = status_code
+        super().__init__(msg, **extra)
+
+
+class UpstreamError(UpstreamBase):
+    ...

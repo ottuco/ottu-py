@@ -1,14 +1,19 @@
 import base64
 import typing
+from json import JSONDecodeError
 
 import httpx
 
+from .cards import Card
 from .enums import TxnType
-from .errors import ConfigurationError
-from .session import Session, SessionHandler
+from .errors import ConfigurationError, UpstreamError
+from .session import Session
 
 
 class Ottu:
+    _session: typing.Optional[Session] = None
+    _card: typing.Optional[Card] = None
+
     def __init__(
         self,
         host_url: str,
@@ -41,7 +46,6 @@ class Ottu:
 
     def __create_session(self) -> httpx.Client:
         headers = {
-            "Content-Type": "application/json",
             **self.__generate_auth_header(),
         }
         return httpx.Client(headers=headers)
@@ -109,29 +113,98 @@ class Ottu:
         **request_params,
     ) -> httpx.Response:
         func = getattr(self.request_session, method.lower())
-        return func(
+        response = func(
             url=f"{self.host_url}{path}",
             **request_params,
         )
+        if 200 <= response.status_code <= 299:
+            return response
+        try:
+            msg = str(response.json())
+        except JSONDecodeError:
+            msg = response.text
+        raise UpstreamError(msg=msg, status_code=response.status_code)
 
     # Core Methods
+
+    @property
+    def session(self):
+        if self._session is None:
+            self._session = Session(ottu=self)
+        return self._session
+
+    def _update_session(self, session: Session):
+        self._session = session
+
     def checkout(
         self,
         txn_type: TxnType,
         amount: str,
+        currency_code: str,
         pg_codes: list[str],
         customer_id: typing.Optional[str] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
         customer_first_name: typing.Optional[str] = None,
         customer_last_name: typing.Optional[str] = None,
-        **kwargs,
+        agreement: typing.Optional[dict] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
     ) -> Session:
-        handler = SessionHandler(self)
-        return handler.checkout(
+        """
+        a proxy method to `Session.create(...)`
+        """
+        return self.session.create(
             txn_type=txn_type,
             amount=amount,
-            currency_code="KWD",
+            currency_code=currency_code,
             pg_codes=pg_codes,
             customer_id=customer_id,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
             customer_first_name=customer_first_name,
             customer_last_name=customer_last_name,
+            agreement=agreement,
+            card_acceptance_criteria=card_acceptance_criteria,
+            attachment=attachment,
+            billing_address=billing_address,
+            due_datetime=due_datetime,
+            email_recipients=email_recipients,
+            expiration_time=expiration_time,
+            extra=extra,
+            generate_qr_code=generate_qr_code,
+            language=language,
+            mode=mode,
+            notifications=notifications,
+            order_no=order_no,
+            product_type=product_type,
+            redirect_url=redirect_url,
+            shopping_address=shopping_address,
+            shortify_attachment_url=shortify_attachment_url,
+            shortify_checkout_url=shortify_checkout_url,
+            vendor_name=vendor_name,
+            webhook_url=webhook_url,
         )
+
+    @property
+    def cards(self) -> Card:
+        if self._card is None:
+            self._card = Card(ottu=self)
+        return self._card
