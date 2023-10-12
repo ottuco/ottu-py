@@ -410,11 +410,13 @@ class Session:
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
+        amount: typing.Optional[str] = None,
     ):
         self.ops(
             operation="refund",
             order_id=order_id,
             session_id=session_id,
+            amount=amount,
         )
         return self.refresh()
 
