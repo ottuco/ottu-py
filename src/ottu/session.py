@@ -1,6 +1,7 @@
 import typing
 
 from .enums import HTTPMethod, TxnType
+from .request import OttuPYResponse
 
 if typing.TYPE_CHECKING:
     from .ottu import Ottu
@@ -143,7 +144,7 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
-    ):
+    ) -> dict:
         """
         Creates a new checkout session.
         :param txn_type: Transaction type
@@ -219,39 +220,41 @@ class Session:
             json_or_form = {
                 "json": payload,
             }
-        response = self.ottu.send_request(
+        ottu_py_response = self.ottu.send_request(
             path=self.url_session_create,
             method=HTTPMethod.POST,
             **json_or_form,
         )
         session = Session(
             ottu=self.ottu,
-            **response.json(),
+            **ottu_py_response.response,
         )
         self.ottu._update_session(session)
-        return self.ottu.session
+        return ottu_py_response.as_dict()
 
-    def retrieve(self, session_id: str):
+    def retrieve(self, session_id: str) -> dict:
         """
         Retrieves a checkout session.
         :param session_id: Session ID
         """
-        response = self.ottu.send_request(
+        ottu_py_response = self.ottu.send_request(
             path=f"{self.url_session_create}{session_id}",
             method=HTTPMethod.GET,
         )
         session = Session(
             ottu=self.ottu,
-            **response.json(),
+            **ottu_py_response.response,
         )
         self.ottu._update_session(session)
-        return self.ottu.session
+        return ottu_py_response.as_dict()
 
-    def refresh(self):
+    def refresh(self) -> typing.Optional[dict]:
         """
         Reloads the payment attributes from upstream by calling the `retrieve` method.
         """
-        return self.retrieve(session_id=self.session_id)
+        if self.session_id:
+            return self.retrieve(session_id=self.session_id)
+        return None
 
     def update(
         self,
@@ -281,7 +284,7 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
-    ):
+    ) -> dict:
         self.__validate_customer_id(customer_id)
         payload = {
             "amount": amount,
@@ -320,14 +323,14 @@ class Session:
             json_or_form = {
                 "json": payload,
             }
-        response = self.ottu.send_request(
+        ottu_py_response = self.ottu.send_request(
             path=f"{self.url_session_create}{self.session_id}",
             method=HTTPMethod.PATCH,
             **json_or_form,
         )
-        session = Session(ottu=self.ottu, **response.json())
+        session = Session(ottu=self.ottu, **ottu_py_response.response)
         self.ottu._update_session(session)
-        return self.ottu.session
+        return ottu_py_response.as_dict()
 
     def ops(
         self,
@@ -335,7 +338,7 @@ class Session:
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
         amount: typing.Optional[str] = None,
-    ):
+    ) -> OttuPYResponse:
         if session_id is None:
             session_id = self.session_id
 
@@ -359,76 +362,84 @@ class Session:
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
-    ):
-        self.ops(
+    ) -> dict:
+        ottu_py_response = self.ops(
             operation="cancel",
             order_id=order_id,
             session_id=session_id,
         )
-        return self.refresh()
+        if ottu_py_response.success:
+            self.refresh()
+        return ottu_py_response.as_dict()
 
     def expire(
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
-    ):
-        self.ops(
+    ) -> dict:
+        ottu_py_response = self.ops(
             operation="expire",
             order_id=order_id,
             session_id=session_id,
         )
-
-        return self.refresh()
+        if ottu_py_response.success:
+            self.refresh()
+        return ottu_py_response.as_dict()
 
     def delete(
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
-    ):
-        self.ops(
+    ) -> dict:
+        ottu_py_response = self.ops(
             operation="delete",
             order_id=order_id,
             session_id=session_id,
         )
+        return ottu_py_response.as_dict()
 
     def capture(
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
         amount: typing.Optional[str] = None,
-    ):
-        self.ops(
+    ) -> dict:
+        ottu_py_response = self.ops(
             operation="capture",
             order_id=order_id,
             session_id=session_id,
             amount=amount,
         )
-
-        return self.refresh()
+        if ottu_py_response.success:
+            self.refresh()
+        return ottu_py_response.as_dict()
 
     def refund(
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
         amount: typing.Optional[str] = None,
-    ):
-        self.ops(
+    ) -> dict:
+        ottu_py_response = self.ops(
             operation="refund",
             order_id=order_id,
             session_id=session_id,
             amount=amount,
         )
-        return self.refresh()
+        if ottu_py_response.success:
+            self.refresh()
+        return ottu_py_response.as_dict()
 
     def void(
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
-    ):
-        self.ops(
+    ) -> dict:
+        ottu_py_response = self.ops(
             operation="void",
             order_id=order_id,
             session_id=session_id,
         )
-
-        return self.refresh()
+        if ottu_py_response.success:
+            self.refresh()
+        return ottu_py_response.as_dict()

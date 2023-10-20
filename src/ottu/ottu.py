@@ -1,12 +1,12 @@
 import base64
 import typing
-from json import JSONDecodeError
 
 import httpx
 
 from .cards import Card
 from .enums import TxnType
-from .errors import ConfigurationError, UpstreamError
+from .errors import ConfigurationError
+from .request import OttuPYResponse, RequestResponseHandler
 from .session import Session
 
 
@@ -111,19 +111,13 @@ class Ottu:
         path: str,
         method: str,
         **request_params,
-    ) -> httpx.Response:
-        func = getattr(self.request_session, method.lower())
-        response = func(
+    ) -> OttuPYResponse:
+        return RequestResponseHandler(
+            session=self.request_session,
+            method=method,
             url=f"{self.host_url}{path}",
             **request_params,
-        )
-        if 200 <= response.status_code <= 299:
-            return response
-        try:
-            msg = str(response.json())
-        except JSONDecodeError:
-            msg = response.text
-        raise UpstreamError(msg=msg, status_code=response.status_code)
+        ).process()
 
     # Core Methods
 

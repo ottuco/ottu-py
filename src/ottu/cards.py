@@ -40,7 +40,7 @@ class Card:
         self.ottu = ottu
 
     def _get_cards(self, type: str = "sandbox") -> None:
-        response = self.ottu.send_request(
+        ottu_py_response = self.ottu.send_request(
             path=self.url_card_list,
             method=HTTPMethod.GET,
             params={
@@ -48,7 +48,7 @@ class Card:
                 "type": type,
             },
         )
-        self._cards = [TokenizedCard(**card) for card in response.json()]
+        self._cards = [TokenizedCard(**card) for card in ottu_py_response.response]
 
     def get_cards(
         self,
