@@ -14,7 +14,7 @@ pip install git+https://github.com/ottuco/ottu-py.git@session-apis
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key"
 )
 ```
@@ -25,7 +25,7 @@ Alternatively, you can pass the `username` and `password` instead of `api_key`.
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     username="your-username",
     password="your-password"
 )
@@ -38,7 +38,7 @@ while calling the checkout API and other situations.
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
@@ -53,11 +53,11 @@ from ottu import Ottu
 from ottu.enums import TxnType
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-session = ottu.checkout(
+response = ottu.checkout(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
@@ -66,7 +66,34 @@ session = ottu.checkout(
     order_no="1234567890",
     ...
 )
-print(session)
+print(response)
+```
+**Response**
+```
+{
+    "success": true,
+    "status_code": 201,
+    "endpoint": "/b/checkout/v1/pymt-txn/",
+    "response": {
+        "amount": "20.230",
+        "checkout_url": "https://hotfix.ottu.dev/b/checkout/redirect/start/?session_id=809429a6c912990b195e4e60652436fcae587757",
+        "currency_code": "KWD",
+        "expiration_time": "00:50:00",
+        "session_id": "809429a6c912990b195e4e60652436fcae587757",
+        "type": "payment_request",
+        ...
+    },
+    "error": {}
+}
+```
+You can also access these `Session` attributes using `ottu.session` property.
+
+```python
+print(ottu.session.session_id)
+# 809429a6c912990b195e4e60652436fcae587757
+
+print(ottu.session.checkout_url)
+# https://hotfix.ottu.dev/b/checkout/redirect/start/?session_id=809429a6c912990b195e4e60652436fcae587757
 ```
 It is also possible to use the `Session.create(...)` to create a new checkout session. That is, `ottu.checkout(...)` is an aliase for `ottu.session.create(...)` method.
 
@@ -75,11 +102,11 @@ from ottu import Ottu
 from ottu.enums import TxnType
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-session = ottu.session.create(
+response = ottu.session.create(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
@@ -88,7 +115,7 @@ session = ottu.session.create(
     order_no="1234567890",
     ...
 )
-print(session)
+print(response)
 ```
 ### Session Retrieve
 
@@ -96,21 +123,11 @@ print(session)
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-session = ottu.session.retrieve(session_id="your-session-id")
-print(session)
-
-# or you can just use `ottu.session` as a property
-from ottu import Ottu
-
-ottu = Ottu(
-    host_url="https://sub.domain.com",
-    api_key="your-secret-api-key",
-)
-ottu.session.retrieve(session_id="your-session-id")
-print(ottu.session)
+response = ottu.session.retrieve(session_id="your-session-id")
+print(response)
 ```
 
 ### Session Update
@@ -119,14 +136,14 @@ print(ottu.session)
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-session = ottu.session.update(
+response = ottu.session.update(
     session_id="your-session-id",
     amount="1234.23",
 )
-print(session) # or `print(ottu.session)`
+print(response)
 ```
 
 ### Attachments (Special Case)
@@ -139,7 +156,7 @@ from ottu import Ottu
 from ottu.enums import TxnType
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
@@ -152,11 +169,11 @@ ottu.session.create(
     order_no="1234567890",
     attachment="path/to/file.pdf", # or "/path/to/file.pdf"
 )
-
 # update the session with updated attachment
-ottu.session.update(
+response = ottu.session.update(
     attachment="path/to/file-1234.pdf", # or "/path/to/file
 )
+print(response)
 ```
 
 ### Accessing the payment methods
@@ -166,7 +183,7 @@ from ottu import Ottu
 from ottu.enums import TxnType
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
@@ -191,11 +208,12 @@ All operartions are performed on the `ottu.session` object. Also, these methods 
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
 ottu.session.retrieve(session_id="your-session-id")
-ottu.session.cancel()
+response = ottu.session.cancel()
+print(response)
 ```
  To specify the `session_id` while canceling the session, you can pass the `session_id` as an argument to the `cancel(...)` method.
 
@@ -203,10 +221,11 @@ ottu.session.cancel()
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-ottu.session.cancel(session_id="your-session-id")
+response = ottu.session.cancel(session_id="your-session-id")
+print(response)
 ```
 To specify the `order_no` while canceling the session, you can pass the `order_no` as an argument to the `cancel(...)` method.
 
@@ -214,10 +233,11 @@ To specify the `order_no` while canceling the session, you can pass the `order_n
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-ottu.session.cancel(order_id="your-order-id")
+response = ottu.session.cancel(order_id="your-order-id")
+print(response)
 ```
 
 #### Expire
@@ -226,10 +246,11 @@ ottu.session.cancel(order_id="your-order-id")
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-ottu.session.expire(session_id="your-session-id")
+response = ottu.session.expire(session_id="your-session-id")
+print(response)
 ```
 
 #### Delete
@@ -238,10 +259,11 @@ ottu.session.expire(session_id="your-session-id")
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-ottu.session.delete(session_id="your-session-id")
+response = ottu.session.delete(session_id="your-session-id")
+print(response)
 ```
 
 #### Capture
@@ -250,10 +272,11 @@ ottu.session.delete(session_id="your-session-id")
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-ottu.session.capture(session_id="your-session-id", amount="20.23")
+response = ottu.session.capture(session_id="your-session-id", amount="20.23")
+print(response)
 ```
 
 #### Refund
@@ -262,10 +285,11 @@ ottu.session.capture(session_id="your-session-id", amount="20.23")
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-ottu.session.refund(session_id="your-session-id", amount="20.23")
+response = ottu.session.refund(session_id="your-session-id", amount="20.23")
+print(response)
 ```
 
 #### Void
@@ -274,10 +298,11 @@ ottu.session.refund(session_id="your-session-id", amount="20.23")
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
 )
-ottu.session.void(session_id="your-session-id", amount="20.23")
+response = ottu.session.void(session_id="your-session-id")
+print(response)
 ```
 
 ### Cards
@@ -288,11 +313,12 @@ ottu.session.void(session_id="your-session-id", amount="20.23")
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-print(ottu.cards.list(type="sandbox"))
+response = ottu.cards.list(type="sandbox")
+print(response)
 ```
 ### Get latest card for a customer
 
@@ -300,11 +326,12 @@ print(ottu.cards.list(type="sandbox"))
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-print(ottu.cards.get(type="sandbox"))
+response = ottu.cards.get(type="sandbox")
+print(response)
 ```
 
 ### Delete a card for a customer using token
@@ -313,9 +340,10 @@ print(ottu.cards.get(type="sandbox"))
 from ottu import Ottu
 
 ottu = Ottu(
-    host_url="https://sub.domain.com",
+    merchant_id="merchant.id.ottu.dev",
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-print(ottu.cards.delete(type="sandbox", token="your-card-token"))
+response = ottu.cards.delete(type="sandbox", token="your-card-token")
+print(response)
 ```
