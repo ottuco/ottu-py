@@ -16,13 +16,13 @@ class Ottu:
 
     def __init__(
         self,
-        host_url: str,
+        merchant_id: str,
         username: typing.Optional[str] = None,
         password: typing.Optional[str] = None,
         api_key: typing.Optional[str] = None,
         customer_id: typing.Optional[str] = None,
     ) -> None:
-        self.host_url = host_url
+        self.host_url = f"https://{merchant_id}"
         self.username = username
         self.password = password
         self.api_key = api_key
