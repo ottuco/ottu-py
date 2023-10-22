@@ -161,7 +161,7 @@ class Ottu:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
-    ) -> Session:
+    ) -> dict:
         """
         a proxy method to `Session.create(...)`
         """
