@@ -37,6 +37,7 @@ class PaymentMethod:
 class Session:
     url_session_create = "/b/checkout/v1/pymt-txn/"
     url_ops = "/b/pbl/v2/operation/"
+    url_auto_debit = "/b/pbl/v2/auto-debit/"
 
     amount: typing.Optional[str] = None
     attachment: typing.Optional[str] = None
@@ -94,13 +95,13 @@ class Session:
     def __bool__(self):
         return bool(self.session_id)
 
-    def __getattr__(self, item):
-        try:
-            return getattr(self.model, item)
-        except AttributeError:
-            raise AttributeError(
-                f"'{self.__class__.__name__}' object has no attribute '{item}'",
-            )
+    # def __getattr__(self, item):
+    #     try:
+    #         return getattr(self.model, item)
+    #     except AttributeError:
+    #         raise AttributeError(
+    #             f"'{self.__class__.__name__}' object has no attribute '{item}'",
+    #         )
 
     def __validate_customer_id(self, customer_id: typing.Optional[str] = None) -> None:
         if self.ottu.customer_id or customer_id:
@@ -119,6 +120,7 @@ class Session:
         amount: str,
         currency_code: str,
         pg_codes: list[str],
+        payment_type: str = "one_off",
         customer_id: typing.Optional[str] = None,
         customer_email: typing.Optional[str] = None,
         customer_phone: typing.Optional[str] = None,
@@ -185,6 +187,7 @@ class Session:
             "amount": amount,
             "currency_code": currency_code,
             "pg_codes": pg_codes,
+            "payment_type": payment_type,
             "customer_id": customer_id,
             "customer_email": customer_email,
             "customer_phone": customer_phone,
@@ -330,6 +333,85 @@ class Session:
         )
         session = Session(ottu=self.ottu, **ottu_py_response.response)
         self.ottu._update_session(session)
+        return ottu_py_response.as_dict()
+
+    def auto_debit_init(
+        self,
+        txn_type: TxnType,
+        amount: str,
+        currency_code: str,
+        pg_codes: list[str],
+        agreement: dict,
+        customer_id: typing.Optional[str] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+    ):
+        if customer_id is None:
+            customer_id = self.ottu.customer_id
+        return self.create(
+            txn_type=txn_type,
+            amount=amount,
+            currency_code=currency_code,
+            pg_codes=pg_codes,
+            payment_type="auto_debit",
+            customer_id=customer_id,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            customer_first_name=customer_first_name,
+            customer_last_name=customer_last_name,
+            agreement=agreement,
+            card_acceptance_criteria=card_acceptance_criteria,
+            attachment=attachment,
+            billing_address=billing_address,
+            due_datetime=due_datetime,
+            email_recipients=email_recipients,
+            expiration_time=expiration_time,
+            extra=extra,
+            generate_qr_code=generate_qr_code,
+            language=language,
+            mode=mode,
+            notifications=notifications,
+            order_no=order_no,
+            product_type=product_type,
+            redirect_url=redirect_url,
+            shopping_address=shopping_address,
+            shortify_attachment_url=shortify_attachment_url,
+            shortify_checkout_url=shortify_checkout_url,
+            vendor_name=vendor_name,
+            webhook_url=webhook_url,
+        )
+
+    def auto_debit(self, token: str, session_id: str) -> dict:
+        payload = {
+            "session_id": session_id,
+            "token": token,
+        }
+        ottu_py_response = self.ottu.send_request(
+            path=self.url_auto_debit,
+            method=HTTPMethod.POST,
+            json=payload,
+        )
         return ottu_py_response.as_dict()
 
     def ops(
