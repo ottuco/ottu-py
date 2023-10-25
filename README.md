@@ -420,7 +420,7 @@ ottu = Ottu(
     customer_id="your-customer-id"
 )
 
-response = ottu.session.auto_debit_checkout(
+response = ottu.auto_debit_checkout(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
@@ -435,7 +435,7 @@ response = ottu.session.auto_debit_checkout(
 
 print(response["response"]["checkout_url"])
 ```
-3. Complete the checkout manually using the checkout URL. Make sure to save the card in the checkout page.
+3. Complete the checkout manually using the checkout URL.
 4. Now, create the session whenever you want to charge the customer using the saved card.
       * Get the card token
          ```python
@@ -471,7 +471,7 @@ print(response["response"]["checkout_url"])
          ```
       * Create new session (with same or different amount, depending on your use case)
          ```python
-         response = ottu.session.auto_debit_checkout(
+         response = ottu.auto_debit_checkout(
              txn_type=TxnType.PAYMENT_REQUEST,
              amount="20.23",
              currency_code="KWD",
@@ -489,7 +489,7 @@ print(response["response"]["checkout_url"])
          ```
       * Charge the customer using the saved card
          ```python
-         response = ottu.session.auto_debit(
+         response = ottu.auto_debit(
              session_id="809429a6c912990b195e4e60652436fcae587757", # value from previous step
              token ="9597918463428402", # value from previous step
          )
