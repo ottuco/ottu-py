@@ -4,15 +4,17 @@ import typing
 import httpx
 
 from .cards import Card
-from .enums import TxnType
+from .enums import HTTPMethod, TxnType
 from .errors import ConfigurationError
 from .request import OttuPYResponse, RequestResponseHandler
 from .session import Session
+from .utils import remove_empty_values
 
 
 class Ottu:
     _session: typing.Optional[Session] = None
     _card: typing.Optional[Card] = None
+    url_payment_methods = "/b/pbl/v2/payment-methods/"
 
     def __init__(
         self,
@@ -204,3 +206,45 @@ class Ottu:
         if self._card is None:
             self._card = Card(ottu=self)
         return self._card
+
+    def _get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> OttuPYResponse:
+        payload = {
+            "plugin": plugin,
+            "currencies": currencies,
+            "customer_id": customer_id,
+            "operation": operation,
+            "tokenizable": tokenizable,
+            "pg_names": pg_names,
+        }
+        payload = remove_empty_values(payload)
+        return self.send_request(
+            path=self.url_payment_methods,
+            method=HTTPMethod.POST,
+            json=payload,
+        )
+
+    def get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> dict:
+        return self._get_payment_methods(
+            plugin=plugin,
+            currencies=currencies,
+            customer_id=customer_id,
+            operation=operation,
+            tokenizable=tokenizable,
+            pg_names=pg_names,
+        ).as_dict()

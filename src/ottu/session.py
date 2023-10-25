@@ -335,7 +335,7 @@ class Session:
         self.ottu._update_session(session)
         return ottu_py_response.as_dict()
 
-    def auto_debit_init(
+    def auto_debit_checkout(
         self,
         txn_type: TxnType,
         amount: str,

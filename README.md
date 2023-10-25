@@ -57,13 +57,13 @@ ottu = Ottu(
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-response = ottu.checkout(
-    txn_type=TxnType.PAYMENT_REQUEST,
+response = ottu.checkout(    txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
     pg_codes=["mpgs","ottu_pg"],
     customer_phone="+96550000000",
     order_no="1234567890",
+
     ...
 )
 print(response)
@@ -347,3 +347,151 @@ ottu = Ottu(
 response = ottu.cards.delete(type="sandbox", token="your-card-token")
 print(response)
 ```
+
+### Auto Debit
+
+1. Get the PGs that supports auto debit.
+
+```python
+from ottu import Ottu
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    api_key="your-secret-api-key",
+    customer_id="your-customer-id"
+)
+
+res = ottu.get_payment_methods(plugin="payment_request", tokenizable=True)
+print(res)
+# {
+#     "success": true,
+#     "status_code": 200,
+#     "endpoint": "/b/pbl/v2/payment-methods/",
+#     "response": {
+#         "customer_payment_methods": [],
+#         "payment_methods": [
+#             {
+#                 "code": "ottu_pg_kwd_tkn",
+#                 "name": "ottu_pg_kwd_tkn",
+#                 "pg": "Ottu PG",
+#                 "is_sandbox": true,
+#                 "logo": "https://beta.ottu.net/media/gateway/settings/logos/Visa-MasterCard002_WIcgTQz.png",
+#                 "wallets": [],
+#                 "default_currency": "KWD",
+#                 "accepted_currencies": [
+#                     "KWD",
+#                     "SAR",
+#                     "BHD"
+#                 ],
+#                 "operation": "purchase",
+#                 "operations": [
+#                     "refund"
+#                 ]
+#             },
+#             {
+#                 "code": "auto-debit",
+#                 "name": "auto-debit",
+#                 "pg": "Ottu PG",
+#                 "is_sandbox": true,
+#                 "logo": "https://beta.ottu.net/static/images/pg_icons/master_visa.svg",
+#                 "wallets": [],
+#                 "default_currency": "KWD",
+#                 "accepted_currencies": [
+#                     "KWD"
+#                 ],
+#                 "operation": "purchase",
+#                 "operations": [
+#                     "refund"
+#                 ]
+#             }
+#         ]
+#     },
+#     "error": {}
+# }
+```
+2. Specify the PG code during the checkout
+
+```python
+from ottu import Ottu
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    api_key="your-secret-api-key",
+    customer_id="your-customer-id"
+)
+
+response = ottu.session.auto_debit_checkout(
+    txn_type=TxnType.PAYMENT_REQUEST,
+    amount="20.23",
+    currency_code="KWD",
+    pg_codes=["ottu_pg_kwd_tkn"], # code that matches your criteria (currency, etc.) from the above response
+    customer_phone="+96550000000",
+    order_no="1234567890",
+    agreement={
+        "id": "agreement-id-of-your-choice",
+        # other agreement attributes
+    },
+)
+
+print(response["response"]["checkout_url"])
+```
+3. Complete the checkout manually using the checkout URL. Make sure to save the card in the checkout page.
+4. Now, create the session whenever you want to charge the customer using the saved card.
+      * Get the card token
+         ```python
+         from ottu import Ottu
+
+         ottu = Ottu(
+             merchant_id="merchant.id.ottu.dev",
+             api_key="your-secret-api-key",
+             customer_id="your-customer-id"
+         )
+
+         response = ottu.cards.get(
+            pg_codes=["ottu_pg_kwd_tkn"] # PG code that used while creating the session
+         )
+         print(response)
+         # {
+         #     "customer_id": "your-customer-id",
+         #     "brand": "MASTERCARD",
+         #     "name_on_card": "JPG",
+         #     "number": "**** 0008",
+         #     "expiry_month": "01",
+         #     "expiry_year": "39",
+         #     "token": "9597918463428402",
+         #     "pg_code": "ottu_pg_kwd_tkn",
+         #     "is_preferred": false,
+         #     "is_expired": false,
+         #     "will_expire_soon": false,
+         #     "cvv_required": true,
+         #     "agreements": [
+         #         "agreement-id-of-your-choice"
+         #     ]
+         # }
+         ```
+      * Create new session (with same or different amount, depending on your use case)
+         ```python
+         response = ottu.session.auto_debit_checkout(
+             txn_type=TxnType.PAYMENT_REQUEST,
+             amount="20.23",
+             currency_code="KWD",
+             pg_codes=["ottu_pg_kwd_tkn"],
+             customer_phone="+96550000000",
+             order_no="1234567890",
+             agreement={
+                 "id": "agreement-id-of-your-choice",
+                 # other agreement attributes
+             },
+         )
+
+         print(response["response"]["session_id"])
+         # 809429a6c912990b195e4e60652436fcae587757
+         ```
+      * Charge the customer using the saved card
+         ```python
+         response = ottu.session.auto_debit(
+             session_id="809429a6c912990b195e4e60652436fcae587757", # value from previous step
+             token ="9597918463428402", # value from previous step
+         )
+         print(response)
+         ```
