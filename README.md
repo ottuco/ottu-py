@@ -57,18 +57,20 @@ ottu = Ottu(
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-response = ottu.checkout(    txn_type=TxnType.PAYMENT_REQUEST,
-    amount="20.23",
-    currency_code="KWD",
-    pg_codes=["mpgs","ottu_pg"],
-    customer_phone="+96550000000",
-    order_no="1234567890",
+response = ottu.checkout(txn_type=TxnType.PAYMENT_REQUEST,
+                         amount="20.23",
+                         currency_code="KWD",
+                         pg_codes=["mpgs", "ottu_pg"],
+                         customer_phone="+96550000000",
+                         order_no="1234567890",
 
-    ...
-)
+                         ...
+                         )
 print(response)
 ```
+
 **Response**
+
 ```
 {
     "success": true,
@@ -86,6 +88,7 @@ print(response)
     "error": {}
 }
 ```
+
 You can also access these `Session` attributes using `ottu.session` property.
 
 ```python
@@ -95,7 +98,9 @@ print(ottu.session.session_id)
 print(ottu.session.checkout_url)
 # https://hotfix.ottu.dev/b/checkout/redirect/start/?session_id=809429a6c912990b195e4e60652436fcae587757
 ```
-It is also possible to use the `Session.create(...)` to create a new checkout session. That is, `ottu.checkout(...)` is an aliase for `ottu.session.create(...)` method.
+
+It is also possible to use the `Session.create(...)` to create a new checkout session. That is, `ottu.checkout(...)` is
+an aliase for `ottu.session.create(...)` method.
 
 ```python
 from ottu import Ottu
@@ -110,13 +115,14 @@ response = ottu.session.create(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
-    pg_codes=["mpgs","ottu_pg"],
+    pg_codes=["mpgs", "ottu_pg"],
     customer_phone="+96550000000",
     order_no="1234567890",
     ...
 )
 print(response)
 ```
+
 ### Session Retrieve
 
 ```python
@@ -148,9 +154,11 @@ print(response)
 
 ### Attachments (Special Case)
 
-You can attach the file to session either while creating the session or updating the session using `attachment` argument.
+You can attach the file to session either while creating the session or updating the session using `attachment`
+argument.
 
 `attachment` argument accepts string which represents the path to the file.
+
 ```python
 from ottu import Ottu
 from ottu.enums import TxnType
@@ -164,14 +172,14 @@ ottu.session.create(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
-    pg_codes=["mpgs","ottu_pg"],
+    pg_codes=["mpgs", "ottu_pg"],
     customer_phone="+96550000000",
     order_no="1234567890",
-    attachment="path/to/file.pdf", # or "/path/to/file.pdf"
+    attachment="path/to/file.pdf",  # or "/path/to/file.pdf"
 )
 # update the session with updated attachment
 response = ottu.session.update(
-    attachment="path/to/file-1234.pdf", # or "/path/to/file
+    attachment="path/to/file-1234.pdf",  # or "/path/to/file
 )
 print(response)
 ```
@@ -191,16 +199,19 @@ ottu.session.create(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
-    pg_codes=["mpgs","ottu_pg"],
+    pg_codes=["mpgs", "ottu_pg"],
     customer_phone="+96550000000",
     order_no="1234567890",
-    attachment="path/to/file.pdf", # or "/path/to/file.pdf"
+    attachment="path/to/file.pdf",  # or "/path/to/file.pdf"
 )
 print(ottu.session.payment_methods)
 ```
 
 ### Operations
-All operartions are performed on the `ottu.session` object. Also, these methods accepts either `session_id` or `order_no` as an argument. If `session_id` is not passed, then it will use the `session_id` from the `ottu.session` object.
+
+All operartions are performed on the `ottu.session` object. Also, these methods accepts either `session_id`
+or `order_no` as an argument. If `session_id` is not passed, then it will use the `session_id` from the `ottu.session`
+object.
 
 #### Cancel
 
@@ -215,7 +226,9 @@ ottu.session.retrieve(session_id="your-session-id")
 response = ottu.session.cancel()
 print(response)
 ```
- To specify the `session_id` while canceling the session, you can pass the `session_id` as an argument to the `cancel(...)` method.
+
+To specify the `session_id` while canceling the session, you can pass the `session_id` as an argument to
+the `cancel(...)` method.
 
 ```python
 from ottu import Ottu
@@ -227,7 +240,9 @@ ottu = Ottu(
 response = ottu.session.cancel(session_id="your-session-id")
 print(response)
 ```
-To specify the `order_no` while canceling the session, you can pass the `order_no` as an argument to the `cancel(...)` method.
+
+To specify the `order_no` while canceling the session, you can pass the `order_no` as an argument to the `cancel(...)`
+method.
 
 ```python
 from ottu import Ottu
@@ -320,6 +335,7 @@ ottu = Ottu(
 response = ottu.cards.list(type="sandbox")
 print(response)
 ```
+
 ### Get latest card for a customer
 
 ```python
@@ -409,6 +425,7 @@ print(res)
 #     "error": {}
 # }
 ```
+
 2. Specify the PG code during the checkout
 
 ```python
@@ -424,7 +441,7 @@ response = ottu.auto_debit_checkout(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
-    pg_codes=["ottu_pg_kwd_tkn"], # code that matches your criteria (currency, etc.) from the above response
+    pg_codes=["ottu_pg_kwd_tkn"],  # code that matches your criteria (currency, etc.) from the above response
     customer_phone="+96550000000",
     order_no="1234567890",
     agreement={
@@ -435,63 +452,94 @@ response = ottu.auto_debit_checkout(
 
 print(response["response"]["checkout_url"])
 ```
+
 3. Complete the checkout manually using the checkout URL.
 4. Now, create the session whenever you want to charge the customer using the saved card.
-      * Get the card token
-         ```python
-         from ottu import Ottu
+    * Get the card token
+       ```python
+       from ottu import Ottu
 
-         ottu = Ottu(
-             merchant_id="merchant.id.ottu.dev",
-             api_key="your-secret-api-key",
-             customer_id="your-customer-id"
-         )
+       ottu = Ottu(
+           merchant_id="merchant.id.ottu.dev",
+           api_key="your-secret-api-key",
+           customer_id="your-customer-id"
+       )
 
-         response = ottu.cards.get(
-            pg_codes=["ottu_pg_kwd_tkn"] # PG code that used while creating the session
-         )
-         print(response)
-         # {
-         #     "customer_id": "your-customer-id",
-         #     "brand": "MASTERCARD",
-         #     "name_on_card": "JPG",
-         #     "number": "**** 0008",
-         #     "expiry_month": "01",
-         #     "expiry_year": "39",
-         #     "token": "9597918463428402",
-         #     "pg_code": "ottu_pg_kwd_tkn",
-         #     "is_preferred": false,
-         #     "is_expired": false,
-         #     "will_expire_soon": false,
-         #     "cvv_required": true,
-         #     "agreements": [
-         #         "agreement-id-of-your-choice"
-         #     ]
-         # }
-         ```
-      * Create new session (with same or different amount, depending on your use case)
-         ```python
-         response = ottu.auto_debit_checkout(
-             txn_type=TxnType.PAYMENT_REQUEST,
-             amount="20.23",
-             currency_code="KWD",
-             pg_codes=["ottu_pg_kwd_tkn"],
-             customer_phone="+96550000000",
-             order_no="1234567890",
-             agreement={
-                 "id": "agreement-id-of-your-choice",
-                 # other agreement attributes
-             },
-         )
+       response = ottu.cards.get(
+          pg_codes=["ottu_pg_kwd_tkn"] # PG code that used while creating the session
+       )
+       print(response)
+       # {
+       #     "customer_id": "your-customer-id",
+       #     "brand": "MASTERCARD",
+       #     "name_on_card": "JPG",
+       #     "number": "**** 0008",
+       #     "expiry_month": "01",
+       #     "expiry_year": "39",
+       #     "token": "9597918463428402",
+       #     "pg_code": "ottu_pg_kwd_tkn",
+       #     "is_preferred": false,
+       #     "is_expired": false,
+       #     "will_expire_soon": false,
+       #     "cvv_required": true,
+       #     "agreements": [
+       #         "agreement-id-of-your-choice"
+       #     ]
+       # }
+       ```
+    * Create new session (with same or different amount, depending on your use case)
+       ```python
+       response = ottu.auto_debit_checkout(
+           txn_type=TxnType.PAYMENT_REQUEST,
+           amount="20.23",
+           currency_code="KWD",
+           pg_codes=["ottu_pg_kwd_tkn"],
+           customer_phone="+96550000000",
+           order_no="1234567890",
+           agreement={
+               "id": "agreement-id-of-your-choice",
+               # other agreement attributes
+           },
+       )
 
-         print(response["response"]["session_id"])
-         # 809429a6c912990b195e4e60652436fcae587757
-         ```
-      * Charge the customer using the saved card
-         ```python
-         response = ottu.auto_debit(
-             session_id="809429a6c912990b195e4e60652436fcae587757", # value from previous step
-             token ="9597918463428402", # value from previous step
-         )
-         print(response)
-         ```
+       print(response["response"]["session_id"])
+       # 809429a6c912990b195e4e60652436fcae587757
+       ```
+    * Charge the customer using the saved card
+       ```python
+       response = ottu.auto_debit(
+           session_id="809429a6c912990b195e4e60652436fcae587757", # value from previous step
+           token ="9597918463428402", # value from previous step
+       )
+       print(response)
+       ```
+
+### Auto Debit (auto-flow)
+
+You can call a single method to charge the customer using a saved card. The method will take care of the PG code and
+tokenized card.
+
+```python
+from ottu import Ottu
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    api_key="your-secret-api-key",
+    customer_id="your-customer-id"
+)
+response = ottu.auto_flow(
+    is_sandbox=True,
+    txn_type=TxnType.PAYMENT_REQUEST,
+    amount="20.23",
+    currency_code="KWD",
+    customer_phone="+96550000000",
+    order_no="1234567890",
+    agreement={
+        "id": "agreement-id-of-your-choice",
+        # other agreement attributes
+    },
+)
+```
+The `.auto_flow(...)` method is _almost_ identical to the `.auto_debit_checkout(...)` method, except
+* `pg_codes` is not required as it will be automatically determined.
+* a new parameter called `is_sandbox` which indicates whether the tokenized card is from sandbox or production.

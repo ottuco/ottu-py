@@ -3,6 +3,8 @@ import typing
 
 import httpx
 
+from ottu import urls
+
 from .cards import Card
 from .enums import HTTPMethod, TxnType
 from .errors import ConfigurationError
@@ -14,7 +16,6 @@ from .utils import remove_empty_values
 class Ottu:
     _session: typing.Optional[Session] = None
     _card: typing.Optional[Card] = None
-    url_payment_methods = "/b/pbl/v2/payment-methods/"
 
     def __init__(
         self,
@@ -272,6 +273,135 @@ class Ottu:
     ):
         return self.session.auto_debit(token=token, session_id=session_id)
 
+    def auto_flow(
+        self,
+        txn_type: TxnType,
+        amount: str,
+        currency_code: str,
+        agreement: dict,
+        is_sandbox: bool,
+        customer_id: typing.Optional[str] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+    ):
+        pg_info = self._get_auto_debit_pg_info(txn_type=txn_type)
+        pg_codes = self._get_auto_debit_pg_codes(pg_info)
+        if len(pg_codes) == 0:
+            return OttuPYResponse(
+                success=False,
+                status_code=400,
+                endpoint=urls.PAYMENT_METHODS,
+                response={},
+                error={"detail": "No payment gateways found for auto debit"},
+            ).as_dict()
+        if len(pg_codes) > 1:
+            return OttuPYResponse(
+                success=False,
+                status_code=400,
+                endpoint=urls.PAYMENT_METHODS,
+                response={},
+                error={"detail": "More than one payment gateway found for auto debit"},
+            ).as_dict()
+        card_type = "sandbox" if is_sandbox else "production"
+        tokens = self._get_auto_debit_card_token(
+            pg_codes=pg_codes,
+            card_type=card_type,
+            agreement_id=agreement.get("id", ""),
+        )
+        if len(tokens) == 0:
+            return OttuPYResponse(
+                success=False,
+                status_code=400,
+                endpoint=urls.USER_CARDS,
+                response={},
+                error={"detail": "No cards found for auto debit"},
+            ).as_dict()
+        if len(tokens) > 1:
+            return OttuPYResponse(
+                success=False,
+                status_code=400,
+                endpoint=urls.USER_CARDS,
+                response={},
+                error={"detail": "More than one card found for auto debit"},
+            ).as_dict()
+        token = tokens[0]
+        response = self.auto_debit_checkout(
+            txn_type=txn_type,
+            amount=amount,
+            currency_code=currency_code,
+            pg_codes=pg_codes,
+            agreement=agreement,
+            customer_id=customer_id,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            customer_first_name=customer_first_name,
+            customer_last_name=customer_last_name,
+            card_acceptance_criteria=card_acceptance_criteria,
+            attachment=attachment,
+            billing_address=billing_address,
+            due_datetime=due_datetime,
+            email_recipients=email_recipients,
+            expiration_time=expiration_time,
+            extra=extra,
+            generate_qr_code=generate_qr_code,
+            language=language,
+            mode=mode,
+            notifications=notifications,
+            order_no=order_no,
+            product_type=product_type,
+            redirect_url=redirect_url,
+            shopping_address=shopping_address,
+            shortify_attachment_url=shortify_attachment_url,
+            shortify_checkout_url=shortify_checkout_url,
+            vendor_name=vendor_name,
+            webhook_url=webhook_url,
+        )
+        if not response.get("success", False):
+            return response
+        return self.auto_debit(token=token, session_id=self.session.session_id)
+
+    def _get_auto_debit_card_token(
+        self,
+        pg_codes: list[str],
+        card_type: str,
+        agreement_id: str,
+    ) -> list[str]:
+        response = self.cards.list(
+            pg_codes=pg_codes,
+            type=card_type,
+            agreement_id=agreement_id,
+        )
+        card_info = response.get("response", [])
+        return [card["token"] for card in card_info if card["is_expired"] is False]
+
+    def _get_auto_debit_pg_info(self, txn_type: TxnType) -> list:
+        pg_info = self.get_payment_methods(plugin=txn_type.value, tokenizable=True)
+        return pg_info.get("response", {}).get("payment_methods", [])
+
+    def _get_auto_debit_pg_codes(self, pg_info: list) -> list[str]:
+        return [pg["code"] for pg in pg_info]
+
     @property
     def cards(self) -> Card:
         if self._card is None:
@@ -297,7 +427,7 @@ class Ottu:
         }
         payload = remove_empty_values(payload)
         return self.send_request(
-            path=self.url_payment_methods,
+            path=urls.PAYMENT_METHODS,
             method=HTTPMethod.POST,
             json=payload,
         )

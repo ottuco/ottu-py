@@ -1,5 +1,7 @@
 import typing
 
+from ottu import urls
+
 from .enums import HTTPMethod
 from .request import OttuPYResponse
 from .utils import remove_empty_values
@@ -9,8 +11,6 @@ if typing.TYPE_CHECKING:
 
 
 class Card:
-    url_card_list = "/b/pbl/v2/card/"
-
     def __init__(self, ottu: "Ottu"):
         self.ottu = ottu
 
@@ -31,7 +31,7 @@ class Card:
         }
         payload = remove_empty_values(payload)
         return self.ottu.send_request(
-            path=self.url_card_list,
+            path=urls.USER_CARDS,
             method=HTTPMethod.POST,
             json=payload,
         )
@@ -93,7 +93,7 @@ class Card:
     ) -> dict:
         customer_id = customer_id or self.ottu.customer_id
         ottu_py_response = self.ottu.send_request(
-            path=f"{self.url_card_list}{token}/",
+            path=f"{urls.USER_CARDS}{token}/",
             method=HTTPMethod.DELETE,
             params={
                 "customer_id": customer_id,
