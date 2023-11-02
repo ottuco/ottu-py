@@ -1,19 +1,12 @@
-from ..ottu import Ottu
-from ..session import Session
-from . import conf
-from .models import Checkout
+from ....ottu import Ottu as _Ottu
+from .. import conf
+from ..models import Checkout
+from .session import Session
 
 
-class DJSession(Session):
-    def create(self, *args, **kwargs):
-        if conf.WEBHOOK_URL and not kwargs.get("webhook_url"):
-            kwargs["webhook_url"] = conf.WEBHOOK_URL
-        return super().create(*args, **kwargs)
-
-
-class DJOttu(Ottu):
+class Ottu(_Ottu):
     model = Checkout
-    session_cls = DJSession
+    session_cls = Session
 
     def get_or_create_session(self):
         instance, _ = self.model.objects.get_or_create(
@@ -32,7 +25,7 @@ class DJOttu(Ottu):
         self._create_or_update_dj_session()
 
 
-dj_ottu = DJOttu(
+ottu = Ottu(
     merchant_id=conf.MERCHANT_ID,
     username=conf.AUTH_USERNAME,
     password=conf.AUTH_PASSWORD,

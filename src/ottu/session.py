@@ -94,14 +94,6 @@ class Session:
     def __bool__(self):
         return bool(self.session_id)
 
-    # def __getattr__(self, item):
-    #     try:
-    #         return getattr(self.model, item)
-    #     except AttributeError:
-    #         raise AttributeError(
-    #             f"'{self.__class__.__name__}' object has no attribute '{item}'",
-    #         )
-
     def __validate_customer_id(self, customer_id: typing.Optional[str] = None) -> None:
         if self.ottu.customer_id or customer_id:
             return

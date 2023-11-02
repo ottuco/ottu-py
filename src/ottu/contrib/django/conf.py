@@ -1,6 +1,6 @@
 from django.conf import settings
 
-from ..errors import ConfigurationError
+from ...errors import ConfigurationError
 
 MERCHANT_ID = getattr(settings, "DJ_OTTU_MERCHANT_ID")
 AUTH_USERNAME = getattr(settings, "DJ_OTTU_AUTH_USERNAME", "")

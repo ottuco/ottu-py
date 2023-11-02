@@ -3,8 +3,8 @@ import json
 from django.http import JsonResponse
 from django.views.generic.base import ContextMixin, View
 
-from ..errors import WebhookProcessingError
-from ..utils import verify_hmac_signature
+from ...errors import WebhookProcessingError
+from ...utils import verify_hmac_signature
 from . import conf
 from .models import Webhook
 
@@ -29,11 +29,11 @@ class WebhookViewAbstractView(ContextMixin, View):
 
     def verify(self):
         signature_server = self.data.get("signature", "")
-        sigature_calculated = verify_hmac_signature(
+        signature_calculated = verify_hmac_signature(
             payload=self.data,
             hmac_key=conf.WEBHOOK_KEY,
         )
-        return signature_server == sigature_calculated
+        return signature_server == signature_calculated
 
     def clean_data(self, processed_data):
         # Use either `processed_data` or `self.data` to create a dict
