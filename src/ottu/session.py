@@ -231,7 +231,8 @@ class Session:
             ottu=self.ottu,
             **ottu_py_response.response,
         )
-        self.ottu._update_session(session)
+        if ottu_py_response.success:
+            self.ottu._update_session(session)
         return ottu_py_response.as_dict()
 
     def retrieve(self, session_id: str) -> dict:
@@ -247,7 +248,8 @@ class Session:
             ottu=self.ottu,
             **ottu_py_response.response,
         )
-        self.ottu._update_session(session)
+        if ottu_py_response.success:
+            self.ottu._update_session(session)
         return ottu_py_response.as_dict()
 
     def refresh(self) -> typing.Optional[dict]:
@@ -331,7 +333,8 @@ class Session:
             **json_or_form,
         )
         session = Session(ottu=self.ottu, **ottu_py_response.response)
-        self.ottu._update_session(session)
+        if ottu_py_response.success:
+            self.ottu._update_session(session)
         return ottu_py_response.as_dict()
 
     def auto_debit_checkout(
