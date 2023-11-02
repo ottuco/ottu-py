@@ -12,10 +12,11 @@ pip install git+https://github.com/ottuco/ottu-py.git@session-apis
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key"
+    auth=APIKeyAuth("your-secret-api-key")
 )
 ```
 
@@ -23,11 +24,14 @@ Alternatively, you can pass the `username` and `password` instead of `api_key`.
 
 ```python
 from ottu import Ottu
+from ottu.auth import BasicAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    username="your-username",
-    password="your-password"
+    auth=BasicAuth(
+        "your-username",
+        "your-password"
+    )
 )
 ```
 
@@ -36,10 +40,11 @@ while calling the checkout API and other situations.
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 ```
@@ -50,11 +55,12 @@ ottu = Ottu(
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 from ottu.enums import TxnType
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 response = ottu.checkout(
@@ -104,11 +110,12 @@ an aliase for `ottu.session.create(...)` method.
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 from ottu.enums import TxnType
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 response = ottu.session.create(
@@ -127,10 +134,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.retrieve(session_id="your-session-id")
 print(response)
@@ -140,10 +148,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.update(
     session_id="your-session-id",
@@ -161,11 +170,12 @@ argument.
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 from ottu.enums import TxnType
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 ottu.session.create(
@@ -188,11 +198,12 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 from ottu.enums import TxnType
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 ottu.session.create(
@@ -217,10 +228,11 @@ object.
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 ottu.session.retrieve(session_id="your-session-id")
 response = ottu.session.cancel()
@@ -232,10 +244,11 @@ the `cancel(...)` method.
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.cancel(session_id="your-session-id")
 print(response)
@@ -246,10 +259,11 @@ method.
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.cancel(order_id="your-order-id")
 print(response)
@@ -259,10 +273,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.expire(session_id="your-session-id")
 print(response)
@@ -272,10 +287,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.delete(session_id="your-session-id")
 print(response)
@@ -285,10 +301,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.capture(session_id="your-session-id", amount="20.23")
 print(response)
@@ -298,10 +315,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.refund(session_id="your-session-id", amount="20.23")
 print(response)
@@ -311,10 +329,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.void(session_id="your-session-id")
 print(response)
@@ -326,10 +345,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 response = ottu.cards.list(type="sandbox")
@@ -340,10 +360,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 response = ottu.cards.get(type="sandbox")
@@ -354,10 +375,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 response = ottu.cards.delete(type="sandbox", token="your-card-token")
@@ -370,10 +392,11 @@ print(response)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 
@@ -430,10 +453,11 @@ print(res)
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 
@@ -457,11 +481,12 @@ print(response["response"]["checkout_url"])
 4. Now, create the session whenever you want to charge the customer using the saved card.
     * Get the card token
        ```python
-       from ottu import Ottu
+      from ottu import Ottu
+      from ottu.auth import APIKeyAuth
 
        ottu = Ottu(
            merchant_id="merchant.id.ottu.dev",
-           api_key="your-secret-api-key",
+           auth=APIKeyAuth("your-secret-api-key"),
            customer_id="your-customer-id"
        )
 
@@ -521,10 +546,11 @@ tokenized card.
 
 ```python
 from ottu import Ottu
+from ottu.auth import APIKeyAuth
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
-    api_key="your-secret-api-key",
+    auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
 response = ottu.auto_flow(
@@ -560,15 +586,29 @@ INSTALLED_APPS = [
 
 Set values for following settings variables.
 
+### Settings
+
+#### Authentication Settings
+
+1. **Basic Authentication**
+    * `DJ_OTTU_AUTH_USERNAME` - Username (example: `username`)
+    * `DJ_OTTU_AUTH_PASSWORD` - Password (example: `my-secret-password`)
+2. **API Key Authentication**
+    * `DJ_OTTU_AUTH_API_KEY` - API Key (example: `my-secret-api-key`)
+3. **Keycloak Authentication**
+    * `DJ_OTTU_AUTH_KEYCLOAK_HOST` - Keycloak Host (example: `https://ssolb.ottu.dev`)
+    * `DJ_OTTU_AUTH_KEYCLOAK_REALM` - Keycloak Realm (example: `beta.ottu.net`)
+    * `DJ_OTTU_AUTH_KEYCLOAK_CLIENT_ID` - Keycloak Client ID (example: `frontend`)
+    * `DJ_OTTU_AUTH_KEYCLOAK_USERNAME` - Keycloak Username (example: `username`)
+    * `DJ_OTTU_AUTH_KEYCLOAK_PASSWORD` - Keycloak Password (example: `my-secret-password`)
+
+#### Other Settings
+
 * `DJ_OTTU_MERCHANT_ID` - Merchant ID (example: `merchant.id.ottu.dev`)
-* `DJ_OTTU_AUTH_USERNAME` - Username (example: `username`)
-* `DJ_OTTU_AUTH_PASSWORD` - Password (example: `my-secret-password`)
-* `DJ_OTTU_AUTH_API_KEY` - API Key (example: `my-secret-api-key`)
 * `DJ_OTTU_WEBHOOK_KEY` - Webhook Key (example: `my-secret-webhook-key`)
 * `DJ_OTTU_WEBHOOK_URL` - Webhook URL (example: `https://your-host.com/path/to/view/`)
 
-In case of authentication, it is mandatory to set either `DJ_OTTU_AUTH_API_KEY` or `DJ_OTTU_AUTH_USERNAME`
-and `DJ_OTTU_AUTH_PASSWORD`.
+In case of authentication, it is mandatory to set any set of authentication settings.
 
 ### Checkout
 
@@ -588,11 +628,13 @@ response = dj_ottu.checkout(
 )
 ```
 
-**Note**: The checkout sessions will be automatically saved (and updated if you configure the webhooks) to the database if you use the `dj_ottu` instance.
+**Note**: The checkout sessions will be automatically saved (and updated if you configure the webhooks) to the database
+if you use the `dj_ottu` instance.
 
 ### Webhooks
 
-To accept webhooks, you must set both `DJ_OTTU_WEBHOOK_KEY` and `DJ_OTTU_WEBHOOK_URL` settings variables. Also, you must setup the webhook receiver view that comes with the package.
+To accept webhooks, you must set both `DJ_OTTU_WEBHOOK_KEY` and `DJ_OTTU_WEBHOOK_URL` settings variables. Also, you must
+setup the webhook receiver view that comes with the package.
 
 ```python
 # views.py
@@ -600,15 +642,17 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from ottu.dj_ottu.views import WebhookViewAbstractView
 
+
 @method_decorator(csrf_exempt, name="dispatch")
 class WebhookReceiverView(WebhookViewAbstractView):
     pass
+
 
 # urls.py
 from django.urls import path
 from .views import WebhookReceiverView
 
 urlpatterns = [
-   path("wh-view/", WebhookReceiverView.as_view(), name="wh-view"),
+    path("wh-view/", WebhookReceiverView.as_view(), name="wh-view"),
 ]
 ```

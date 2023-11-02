@@ -2,6 +2,7 @@ import base64
 import typing
 
 import httpx
+from httpx import Auth
 
 from . import urls
 from .cards import Card
@@ -23,15 +24,11 @@ class Ottu:
     def __init__(
         self,
         merchant_id: str,
-        username: typing.Optional[str] = None,
-        password: typing.Optional[str] = None,
-        api_key: typing.Optional[str] = None,
+        auth: Auth,
         customer_id: typing.Optional[str] = None,
     ) -> None:
         self.host_url = f"https://{merchant_id}"
-        self.username = username
-        self.password = password
-        self.api_key = api_key
+        self.auth = auth
         self.customer_id = customer_id
 
         # Validations
@@ -40,24 +37,10 @@ class Ottu:
         # Other initializations
         self.request_session = self.__create_session()
 
-    def __generate_auth_header(self) -> typing.Dict[str, str]:
-        if self.api_key:
-            value = f"Api-Key {self.api_key}"
-        else:
-            creds = base64.b64encode(
-                f"{self.username}:{self.password}".encode(),
-            ).decode("utf-8")
-            value = f"Basic {creds}"
-        return {"Authorization": value}
-
     def __create_session(self) -> httpx.Client:
-        headers = {
-            **self.__generate_auth_header(),
-        }
-        return httpx.Client(headers=headers)
+        return httpx.Client(auth=self.auth)
 
     def __validate_init(self) -> None:
-        self.__validate_auth_params()
         self.__validate_host_url()
 
     def __validate_host_url(self) -> None:
@@ -87,31 +70,8 @@ class Ottu:
             msg = f"Host URL must contain domain name with protocol. {msg_example}"
             raise ConfigurationError(msg)
 
-    def __validate_auth_params(self) -> None:
-        if self.api_key:
-            # Authentication using API key, we don't need username and password
-            if self.username or self.password:
-                msg = (
-                    "You are using API key for authentication, "
-                    "username and password are not required"
-                )
-                raise ConfigurationError(msg)
-        elif self.username and self.password:
-            # Authentication using username and password, we don't need API key
-            if self.api_key:
-                msg = (
-                    "You are using username and password "
-                    "for authentication, API key is not required"
-                )
-                raise ConfigurationError(msg)
-        else:
-            msg = (
-                "You must provide either API key or "
-                "username and password for authentication"
-            )
-            raise ConfigurationError(msg)
-
     # Handle requests
+
     def send_request(
         self,
         path: str,
