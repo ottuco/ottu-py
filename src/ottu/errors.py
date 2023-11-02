@@ -25,3 +25,7 @@ class UpstreamBase(OttuBaseError):
 
 class UpstreamError(UpstreamBase):
     ...
+
+
+class WebhookProcessingError(OttuBaseError):
+    ...

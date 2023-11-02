@@ -3,8 +3,7 @@ import typing
 
 import httpx
 
-from ottu import urls
-
+from . import urls
 from .cards import Card
 from .enums import HTTPMethod, TxnType
 from .errors import ConfigurationError
@@ -16,6 +15,10 @@ from .utils import remove_empty_values
 class Ottu:
     _session: typing.Optional[Session] = None
     _card: typing.Optional[Card] = None
+    session_cls: typing.Type[Session] = Session
+    request_response_handler: typing.Type[
+        RequestResponseHandler
+    ] = RequestResponseHandler
 
     def __init__(
         self,
@@ -115,7 +118,7 @@ class Ottu:
         method: str,
         **request_params,
     ) -> OttuPYResponse:
-        return RequestResponseHandler(
+        return self.request_response_handler(
             session=self.request_session,
             method=method,
             url=f"{self.host_url}{path}",
@@ -127,7 +130,7 @@ class Ottu:
     @property
     def session(self):
         if self._session is None:
-            self._session = Session(ottu=self)
+            self._session = self.session_cls(ottu=self)
         return self._session
 
     def _update_session(self, session: Session):

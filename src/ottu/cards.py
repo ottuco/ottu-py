@@ -1,7 +1,6 @@
 import typing
 
-from ottu import urls
-
+from . import urls
 from .enums import HTTPMethod
 from .request import OttuPYResponse
 from .utils import remove_empty_values

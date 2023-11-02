@@ -1,13 +1,12 @@
 import typing
 
 from .enums import HTTPMethod, TxnType
+from .errors import ValidationError
 from .request import OttuPYResponse
+from .utils import remove_empty_values
 
 if typing.TYPE_CHECKING:
     from .ottu import Ottu
-
-from .errors import ValidationError
-from .utils import remove_empty_values
 
 
 class PaymentMethod:

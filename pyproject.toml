@@ -39,6 +39,7 @@ classifiers = [
 ]
 dependencies = [
     "httpx~=0.25.0",
+    "django<=4.2"
 ]
 
 [project.optional-dependencies]
@@ -59,3 +60,8 @@ dev = ["ottu-py[test, lint-and-formatting]", "bump2version~=1.0.1"]
 
 [project.urls]
 "Homepage" = "https://github.com/ottuco/ottu-py"
+
+[tool.mypy]
+exclude = [
+    'dj_ottu/',  # but TOML's single-quoted strings do not
+]

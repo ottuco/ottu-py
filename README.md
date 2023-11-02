@@ -57,15 +57,15 @@ ottu = Ottu(
     api_key="your-secret-api-key",
     customer_id="your-customer-id"
 )
-response = ottu.checkout(txn_type=TxnType.PAYMENT_REQUEST,
-                         amount="20.23",
-                         currency_code="KWD",
-                         pg_codes=["mpgs", "ottu_pg"],
-                         customer_phone="+96550000000",
-                         order_no="1234567890",
-
-                         ...
-                         )
+response = ottu.checkout(
+    txn_type=TxnType.PAYMENT_REQUEST,
+    amount="20.23",
+    currency_code="KWD",
+    pg_codes=["mpgs", "ottu_pg"],
+    customer_phone="+96550000000",
+    order_no="1234567890",
+    ...
+)
 print(response)
 ```
 
@@ -540,6 +540,75 @@ response = ottu.auto_flow(
     },
 )
 ```
+
 The `.auto_flow(...)` method is _almost_ identical to the `.auto_debit_checkout(...)` method, except
+
 * `pg_codes` is not required as it will be automatically determined.
 * a new parameter called `is_sandbox` which indicates whether the tokenized card is from sandbox or production.
+
+## Django Integration
+
+Add `ottu.dj_ottu` to your `INSTALLED_APPS` setting.
+
+```python
+INSTALLED_APPS = [
+    ...,
+    "ottu.dj_ottu",
+    ...,
+]
+```
+
+Set values for following settings variables.
+
+* `DJ_OTTU_MERCHANT_ID` - Merchant ID (example: `merchant.id.ottu.dev`)
+* `DJ_OTTU_AUTH_USERNAME` - Username (example: `username`)
+* `DJ_OTTU_AUTH_PASSWORD` - Password (example: `my-secret-password`)
+* `DJ_OTTU_AUTH_API_KEY` - API Key (example: `my-secret-api-key`)
+* `DJ_OTTU_WEBHOOK_KEY` - Webhook Key (example: `my-secret-webhook-key`)
+* `DJ_OTTU_WEBHOOK_URL` - Webhook URL (example: `https://your-host.com/path/to/view/`)
+
+In case of authentication, it is mandatory to set either `DJ_OTTU_AUTH_API_KEY` or `DJ_OTTU_AUTH_USERNAME`
+and `DJ_OTTU_AUTH_PASSWORD`.
+
+### Checkout
+
+```python
+# any_module.py
+from ottu.dj_ottu.ottu import dj_ottu
+
+response = dj_ottu.checkout(
+    txn_type=TxnType.PAYMENT_REQUEST,
+    amount="20.23",
+    currency_code="KWD",
+    pg_codes=["mpgs", "ottu_pg"],
+    customer_id="your-customer-id",
+    customer_phone="+96550000000",
+    order_no="1234567890",
+    ...
+)
+```
+
+**Note**: The checkout sessions will be automatically saved (and updated if you configure the webhooks) to the database if you use the `dj_ottu` instance.
+
+### Webhooks
+
+To accept webhooks, you must set both `DJ_OTTU_WEBHOOK_KEY` and `DJ_OTTU_WEBHOOK_URL` settings variables. Also, you must setup the webhook receiver view that comes with the package.
+
+```python
+# views.py
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from ottu.dj_ottu.views import WebhookViewAbstractView
+
+@method_decorator(csrf_exempt, name="dispatch")
+class WebhookReceiverView(WebhookViewAbstractView):
+    pass
+
+# urls.py
+from django.urls import path
+from .views import WebhookReceiverView
+
+urlpatterns = [
+   path("wh-view/", WebhookReceiverView.as_view(), name="wh-view"),
+]
+```
