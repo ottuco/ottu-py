@@ -9,7 +9,19 @@ def remove_empty_values(d: dict):
     return {k: v for k, v in d.items() if v}
 
 
-def verify_hmac_signature(payload: dict, hmac_key: str):
+def verify_signature(
+    payload: dict,
+    signature: str,
+    webhook_key: str,
+) -> bool:
+    calculated_signature = calculate_hmac_signature(
+        payload=payload,
+        hmac_key=webhook_key,
+    )
+    return calculated_signature == signature
+
+
+def calculate_hmac_signature(payload: dict, hmac_key: str) -> str:
     # List of fields that are considered for the HMAC signature
     keys = [
         "amount",

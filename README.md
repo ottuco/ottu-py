@@ -656,3 +656,24 @@ urlpatterns = [
     path("wh-view/", WebhookReceiverView.as_view(), name="wh-view"),
 ]
 ```
+### Miscellaneous
+
+### Webhook Verification
+You can verify the webhook signature using `verify_signature(...)` function.
+
+```python
+from ottu.utils import verify_signature
+
+webhook_data_received = {
+   "amount":"86.000",
+   "currency_code":"KWD",
+   "customer_first_name":"example-customer",
+   ...,  # other attributes
+   "signature":"6143b8ad4bd283540721ab000f6de746e722231aaaa90bc38f639081d3ff9f67"
+}
+verified = verify_signature(
+   payload=webhook_data_received,
+   signature=webhook_data_received["signature"], # Usually, signature will be sent along with the webhook data.
+   webhook_key=hmac_secret_key_recieved_from_ottu # HMAC Secret Key received from Ottu
+)
+```
