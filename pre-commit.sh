@@ -3,4 +3,5 @@
 # installed in the running environment.
 
 pre-commit run -a
+mypy src/
 flake8 .

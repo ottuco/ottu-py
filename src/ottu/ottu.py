@@ -1,4 +1,3 @@
-import base64
 import typing
 
 import httpx
@@ -93,7 +92,7 @@ class Ottu:
             self._session = self.session_cls(ottu=self)
         return self._session
 
-    def _update_session(self, session: Session):
+    def _update_session(self, session: Session) -> None:
         self._session = session
 
     def checkout(

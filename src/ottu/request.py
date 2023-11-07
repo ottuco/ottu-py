@@ -45,12 +45,12 @@ class RequestResponseHandler:
 
     def _process_response(self, response: httpx.Response) -> dict:
         if response.status_code == 204:
-            response = {}
+            result = {}
         try:
-            response = response.json()
+            result = response.json()
         except JSONDecodeError:
-            response = response.text
-        return response
+            result = {"detail": response.text}
+        return result
 
     def parse_success_response(
         self,

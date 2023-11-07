@@ -1,3 +1,4 @@
+from ....auth import APIKeyAuth, BasicAuth
 from ....ottu import Ottu as _Ottu
 from .. import conf
 from ..models import Checkout
@@ -20,14 +21,15 @@ class Ottu(_Ottu):
             setattr(session_obj, field, value)
         session_obj.save()
 
-    def _update_session(self, session: Session):
+    def _update_session(self, session: Session):  # type: ignore[override]
         super()._update_session(session)
         self._create_or_update_dj_session()
 
 
+basic_auth = BasicAuth(username=conf.AUTH_USERNAME, password=conf.AUTH_PASSWORD)
+api_key_auth = APIKeyAuth(api_key=conf.AUTH_API_KEY)
+
 ottu = Ottu(
     merchant_id=conf.MERCHANT_ID,
-    username=conf.AUTH_USERNAME,
-    password=conf.AUTH_PASSWORD,
-    api_key=conf.AUTH_API_KEY,
+    auth=basic_auth or api_key_auth,
 )

@@ -63,5 +63,6 @@ dev = ["ottu-py[test, lint-and-formatting]", "bump2version~=1.0.1"]
 
 [tool.mypy]
 exclude = [
-    'dj_ottu/',  # but TOML's single-quoted strings do not
+    'src/ottu/contrib/django/migrations',  # Use single quotes for globs
 ]
+disable_error_code = "import-untyped"
