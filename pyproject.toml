@@ -45,8 +45,11 @@ dependencies = [
 [project.optional-dependencies]
 test = [
     "ottu-py",
+    "pytest",
     "pytest-django",
-    "tox"
+    "pytest_httpx",
+    "tox",
+    "pytest-cov",
 ]
 lint-and-formatting = [
     "black",
@@ -63,6 +66,41 @@ dev = ["ottu-py[test, lint-and-formatting]", "bump2version~=1.0.1"]
 
 [tool.mypy]
 exclude = [
-    'src/ottu/contrib/django/migrations',  # Use single quotes for globs
+    'src/ottu/contrib/django/migrations', # Use single quotes for globs
 ]
 disable_error_code = "import-untyped"
+
+[tool.coverage.run]
+branch = true
+omit = [
+    "src/ottu/contrib/django/migrations/*",
+    "__init__.py",
+    "tests/*",
+]
+[tool.coverage.report]
+precision = 2
+skip_empty = true
+skip_covered = true
+show_missing = true
+sort = "Cover"
+exclude_also = [
+    # Magic Methods
+    "def __str__",
+    "def __repr__",
+    "def __bool__",
+
+    # Type Checking
+    "if TYPE_CHECKING:",
+    "if typing.TYPE_CHECKING:",
+
+    # Other
+    "raise NotImplementedError",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "tests.test_ottu.test_contrib.test_django.settings"
+minversion = "6.0"
+addopts = "-s --cov"
+testpaths = [
+    "tests",
+]

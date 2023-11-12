@@ -112,11 +112,6 @@ class Webhook(models.Model):
     def __str__(self):
         return str(self.session_id)
 
-    def update_instance_from_webhook(self, data: dict):
-        for field, value in data.items():
-            setattr(self, field, value)
-        self.save()
-
     @classmethod
     def create_from_webhook(cls, data):
         session_id = data.get("session_id", "")

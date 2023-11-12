@@ -29,7 +29,12 @@ class Ottu(_Ottu):
 basic_auth = BasicAuth(username=conf.AUTH_USERNAME, password=conf.AUTH_PASSWORD)
 api_key_auth = APIKeyAuth(api_key=conf.AUTH_API_KEY)
 
-ottu = Ottu(
-    merchant_id=conf.MERCHANT_ID,
-    auth=basic_auth or api_key_auth,
-)
+
+def _generate_instance():
+    return Ottu(
+        merchant_id=conf.MERCHANT_ID,
+        auth=basic_auth or api_key_auth,
+    )
+
+
+ottu = _generate_instance()

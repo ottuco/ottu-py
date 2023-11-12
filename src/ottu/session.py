@@ -95,7 +95,7 @@ class Session:
         return bool(self.session_id)
 
     def __validate_customer_id(self, customer_id: typing.Optional[str] = None) -> None:
-        if self.ottu.customer_id or customer_id:
+        if self.customer_id or customer_id:
             return
         raise ValidationError("`customer_id` is required")
 
@@ -244,12 +244,15 @@ class Session:
             self.ottu._update_session(session)
         return ottu_py_response.as_dict()
 
-    def refresh(self) -> typing.Optional[dict]:
+    def refresh(self, session_id: typing.Optional[str] = None) -> typing.Optional[dict]:
         """
         Reloads the payment attributes from upstream by calling the `retrieve` method.
         """
-        if self.session_id:
-            return self.retrieve(session_id=self.session_id)
+        session_id = session_id or self.session_id
+        if session_id:
+            response = self.retrieve(session_id=session_id)
+            if response["success"]:
+                return response
         return None
 
     def update(
@@ -361,8 +364,6 @@ class Session:
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
     ):
-        if customer_id is None:
-            customer_id = self.ottu.customer_id
         return self.create(
             txn_type=txn_type,
             amount=amount,
@@ -419,7 +420,7 @@ class Session:
             session_id = self.session_id
 
         if not session_id and not order_id:
-            raise ValidationError("session_id and order_id are required")
+            raise ValidationError("session_id or order_id is required")
 
         payload = {
             "session_id": session_id,

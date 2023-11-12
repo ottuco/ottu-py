@@ -6,7 +6,6 @@ from httpx import Auth
 from . import urls
 from .cards import Card
 from .enums import HTTPMethod, TxnType
-from .errors import ConfigurationError
 from .request import OttuPYResponse, RequestResponseHandler
 from .session import Session
 from .utils import remove_empty_values
@@ -30,46 +29,11 @@ class Ottu:
         self.auth = auth
         self.customer_id = customer_id
 
-        # Validations
-        self.__validate_init()
-
         # Other initializations
         self.request_session = self.__create_session()
 
     def __create_session(self) -> httpx.Client:
         return httpx.Client(auth=self.auth)
-
-    def __validate_init(self) -> None:
-        self.__validate_host_url()
-
-    def __validate_host_url(self) -> None:
-        """
-        Validates host URL. URL must be
-        1. https
-        2. not end with /
-        3. must contain domain name with protocol
-            Example:
-                1. https://example.com - Correct
-                2. https://example.com/ - Incorrect
-                3. https://example.com/anypath - Incorrect
-
-        """
-        msg_example = (
-            "Example: `https://example.com`, "
-            "but not `https://example.com/` or "
-            "`https://example.com/anypath`"
-        )
-        if not self.host_url.startswith("https://"):
-            msg = f"Host URL must start with https://. {msg_example}"
-            raise ConfigurationError(msg)
-        if self.host_url.endswith("/"):
-            msg = f"Host URL must not end with /. {msg_example}"
-            raise ConfigurationError(msg)
-        if self.host_url.count("/") != 2:
-            msg = f"Host URL must contain domain name with protocol. {msg_example}"
-            raise ConfigurationError(msg)
-
-    # Handle requests
 
     def send_request(
         self,
@@ -290,6 +254,7 @@ class Ottu:
             pg_codes=pg_codes,
             card_type=card_type,
             agreement_id=agreement.get("id", ""),
+            customer_id=customer_id,
         )
         if len(tokens) == 0:
             return OttuPYResponse(
@@ -348,11 +313,13 @@ class Ottu:
         pg_codes: list[str],
         card_type: str,
         agreement_id: str,
+        customer_id: typing.Optional[str] = None,
     ) -> list[str]:
         response = self.cards.list(
             pg_codes=pg_codes,
             type=card_type,
             agreement_id=agreement_id,
+            customer_id=customer_id,
         )
         card_info = response.get("response", [])
         return [card["token"] for card in card_info if card["is_expired"] is False]
