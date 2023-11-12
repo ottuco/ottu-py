@@ -50,6 +50,7 @@ test = [
     "pytest_httpx",
     "tox",
     "pytest-cov",
+    "pytest-mock",
 ]
 lint-and-formatting = [
     "black",
