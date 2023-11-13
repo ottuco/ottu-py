@@ -1,18 +1,8 @@
-import json
-from typing import Any
-
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from ...session import PaymentMethod
+from ...json import PaymentMethodEncoder
 from . import conf
-
-
-class PaymentMethodEncoder(json.JSONEncoder):
-    def default(self, o: Any) -> Any:
-        if isinstance(o, PaymentMethod):
-            return o.__dict__
-        return json.JSONEncoder.default(self, o)
 
 
 class Checkout(models.Model):

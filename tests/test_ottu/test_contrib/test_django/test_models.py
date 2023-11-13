@@ -31,9 +31,22 @@ class TestWebhookNModel:
 
 class TestPaymentMethodEncoder:
     def test_success(self):
+        expected_dict = {
+            "code": "foo-abcd",
+            "name": "Amex Card",
+            "pg": None,
+            "type": None,
+            "amount": None,
+            "currency_code": None,
+            "fee": None,
+            "fee_description": None,
+            "icon": None,
+            "flow": None,
+            "redirect_url": None,
+        }
         pm = PaymentMethod(code="foo-abcd", name="Amex Card")
         result = json.dumps(pm, cls=PaymentMethodEncoder)
-        assert result == '{"code": "foo-abcd", "name": "Amex Card"}'
+        assert result == json.dumps(expected_dict)
 
     def test_fail(self):
         class Foo:

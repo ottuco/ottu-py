@@ -1,7 +1,9 @@
 import typing
+from dataclasses import dataclass
 
 from .enums import HTTPMethod, TxnType
 from .errors import ValidationError
+from .mixins import AsDictMixin
 from .request import OttuPYResponse
 from .utils import remove_empty_values
 
@@ -9,7 +11,8 @@ if typing.TYPE_CHECKING:
     from .ottu import Ottu
 
 
-class PaymentMethod:
+@dataclass
+class PaymentMethod(AsDictMixin):
     code: typing.Optional[str] = None
     name: typing.Optional[str] = None
     pg: typing.Optional[str] = None
@@ -21,10 +24,6 @@ class PaymentMethod:
     icon: typing.Optional[str] = None
     flow: typing.Optional[str] = None
     redirect_url: typing.Optional[str] = None
-
-    def __init__(self, **data):
-        for field, value in data.items():
-            setattr(self, field, value)
 
     def __str__(self):
         return f"PaymentMethod({self.code or '######'})"
