@@ -101,7 +101,6 @@ exclude_also = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.test_ottu.test_contrib.test_django.settings"
 minversion = "6.0"
-addopts = "-s --cov"
 testpaths = [
     "tests",
 ]
