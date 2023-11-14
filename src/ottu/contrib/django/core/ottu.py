@@ -17,7 +17,7 @@ class Ottu(_Ottu):
 
     def _create_or_update_dj_session(self):
         session_obj = self.get_or_create_session()
-        for field, value in self.session.__dict__.items():
+        for field, value in self.session.as_dict().items():
             setattr(session_obj, field, value)
         session_obj.save()
 

@@ -93,6 +93,45 @@ class Session:
     def __bool__(self):
         return bool(self.session_id)
 
+    def as_dict(self):
+        fields = [
+            "amount",
+            "attachment",
+            "attachment_short_url",
+            "billing_address",
+            "checkout_short_url",
+            "checkout_url",
+            "currency_code",
+            "customer_email",
+            "customer_first_name",
+            "customer_last_name",
+            "customer_id",
+            "customer_phone",
+            "due_datetime",
+            "email_recipients",
+            "expiration_time",
+            "extra",
+            "initiator_id",
+            "language",
+            "mode",
+            "notifications",
+            "operation",
+            "order_no",
+            "payment_methods",
+            "pg_codes",
+            "qr_code_url",
+            "redirect_url",
+            "session_id",
+            "shipping_address",
+            "state",
+            "type",
+            "vendor_name",
+            "webhook_url",
+        ]
+        return remove_empty_values(
+            {field: getattr(self, field, "") for field in fields},
+        )
+
     def __validate_customer_id(self, customer_id: typing.Optional[str] = None) -> None:
         if self.customer_id or customer_id:
             return
