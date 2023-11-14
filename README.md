@@ -595,12 +595,6 @@ Set values for following settings variables.
     * `DJ_OTTU_AUTH_PASSWORD` - Password (example: `my-secret-password`)
 2. **API Key Authentication**
     * `DJ_OTTU_AUTH_API_KEY` - API Key (example: `my-secret-api-key`)
-3. **Keycloak Authentication**
-    * `DJ_OTTU_AUTH_KEYCLOAK_HOST` - Keycloak Host (example: `https://ssolb.ottu.dev`)
-    * `DJ_OTTU_AUTH_KEYCLOAK_REALM` - Keycloak Realm (example: `beta.ottu.net`)
-    * `DJ_OTTU_AUTH_KEYCLOAK_CLIENT_ID` - Keycloak Client ID (example: `frontend`)
-    * `DJ_OTTU_AUTH_KEYCLOAK_USERNAME` - Keycloak Username (example: `username`)
-    * `DJ_OTTU_AUTH_KEYCLOAK_PASSWORD` - Keycloak Password (example: `my-secret-password`)
 
 #### Other Settings
 
