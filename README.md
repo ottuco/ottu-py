@@ -579,7 +579,7 @@ Add `ottu.dj_ottu` to your `INSTALLED_APPS` setting.
 ```python
 INSTALLED_APPS = [
     ...,
-    "ottu.dj_ottu",
+    "ottu.contrib.django",
     ...,
 ]
 ```
