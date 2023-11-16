@@ -10,4 +10,4 @@ def ottu():
 
 @pytest.fixture
 def custom_wh_error(settings):
-    settings.DJ_OTTU_RAISE_WH_ERROR = True
+    settings.OTTU_RAISE_WH_ERROR = True

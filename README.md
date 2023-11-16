@@ -574,7 +574,7 @@ The `.auto_flow(...)` method is _almost_ identical to the `.auto_debit_checkout(
 
 ## Django Integration
 
-Add `ottu.dj_ottu` to your `INSTALLED_APPS` setting.
+Add `ottu.contrib.django` to your `INSTALLED_APPS` setting.
 
 ```python
 INSTALLED_APPS = [
@@ -591,16 +591,16 @@ Set values for following settings variables.
 #### Authentication Settings
 
 1. **Basic Authentication**
-    * `DJ_OTTU_AUTH_USERNAME` - Username (example: `username`)
-    * `DJ_OTTU_AUTH_PASSWORD` - Password (example: `my-secret-password`)
+    * `OTTU_AUTH_USERNAME` - Username (example: `username`)
+    * `OTTU_AUTH_PASSWORD` - Password (example: `my-secret-password`)
 2. **API Key Authentication**
-    * `DJ_OTTU_AUTH_API_KEY` - API Key (example: `my-secret-api-key`)
+    * `OTTU_AUTH_API_KEY` - API Key (example: `my-secret-api-key`)
 
 #### Other Settings
 
-* `DJ_OTTU_MERCHANT_ID` - Merchant ID (example: `merchant.id.ottu.dev`)
-* `DJ_OTTU_WEBHOOK_KEY` - Webhook Key (example: `my-secret-webhook-key`)
-* `DJ_OTTU_WEBHOOK_URL` - Webhook URL (example: `https://your-host.com/path/to/view/`)
+* `OTTU_MERCHANT_ID` - Merchant ID (example: `merchant.id.ottu.dev`)
+* `OTTU_WEBHOOK_KEY` - Webhook Key (example: `my-secret-webhook-key`)
+* `OTTU_WEBHOOK_URL` - Webhook URL (example: `https://your-host.com/path/to/view/`)
 
 In case of authentication, it is mandatory to set any set of authentication settings.
 
@@ -608,9 +608,9 @@ In case of authentication, it is mandatory to set any set of authentication sett
 
 ```python
 # any_module.py
-from ottu.dj_ottu.ottu import dj_ottu
+from ottu.contrib.django.core.ottu import ottu
 
-response = dj_ottu.checkout(
+response = ottu.checkout(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
@@ -623,18 +623,18 @@ response = dj_ottu.checkout(
 ```
 
 **Note**: The checkout sessions will be automatically saved (and updated if you configure the webhooks) to the database
-if you use the `dj_ottu` instance.
+if you use the `ottu` instance.
 
 ### Webhooks
 
-To accept webhooks, you must set both `DJ_OTTU_WEBHOOK_KEY` and `DJ_OTTU_WEBHOOK_URL` settings variables. Also, you must
+To accept webhooks, you must set both `OTTU_WEBHOOK_KEY` and `OTTU_WEBHOOK_URL` settings variables. Also, you must
 setup the webhook receiver view that comes with the package.
 
 ```python
 # views.py
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from ottu.dj_ottu.views import WebhookViewAbstractView
+from ottu.contrib.django.views import WebhookViewAbstractView
 
 
 @method_decorator(csrf_exempt, name="dispatch")
@@ -670,4 +670,25 @@ verified = verify_signature(
    signature=webhook_data_received["signature"], # Usually, signature will be sent along with the webhook data.
    webhook_key=hmac_secret_key_recieved_from_ottu # HMAC Secret Key received from Ottu
 )
+```
+## Test
+
+```bash
+# Install the dependencies
+pip install .[test]
+
+# Run tests
+python -m pytest
+```
+
+## Release
+```base
+# do a dry-run first -
+bump2version --dry-run --verbose [major|minor|patch]
+
+# if everything looks good, run the following command to release
+bump2version --verbose [major|minor|patch]
+
+# push the changes to remote
+git push origin master --tags
 ```

@@ -31,8 +31,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 USE_TZ = True
 
-DJ_OTTU_MERCHANT_ID = "test.ottu.dev"
-DJ_OTTU_AUTH_USERNAME = "dj_username"
-DJ_OTTU_AUTH_PASSWORD = "dj_password"
-DJ_OTTU_WEBHOOK_URL = "https://test.client.dev/webhook-receiver/"
-DJ_OTTU_WEBHOOK_KEY = "pu9MpX3yPR"
+# Ottu settings
+OTTU_MERCHANT_ID = "test.ottu.dev"
+OTTU_AUTH_USERNAME = "dj_username"
+OTTU_AUTH_PASSWORD = "dj_password"
+OTTU_WEBHOOK_URL = "https://test.client.dev/webhook-receiver/"
+OTTU_WEBHOOK_KEY = "pu9MpX3yPR"
