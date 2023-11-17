@@ -48,7 +48,6 @@ test = [
     "pytest",
     "pytest-django",
     "pytest_httpx",
-    "tox",
     "pytest-cov",
     "pytest-mock",
 ]
