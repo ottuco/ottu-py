@@ -5,8 +5,9 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.staticfiles",
     "django.contrib.auth",
-    "tests.test_ottu.test_contrib.test_django.polls",
+    "django.contrib.admin",
     "ottu.contrib.django",
+    "tests.test_ottu.test_contrib.test_django.polls",
 ]
 
 MIDDLEWARE = []

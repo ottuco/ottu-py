@@ -1,73 +1,20 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from ...json import PaymentMethodEncoder
 from . import conf
 
 
 class Checkout(models.Model):
     session_id = models.CharField(_("Session ID"), max_length=100, primary_key=True)
+    type = models.CharField(_("Type"), max_length=250)
+    payment_type = models.CharField(_("Payment Type"), max_length=250)
     amount = models.CharField(_("Amount"), max_length=20)
-    attachment = models.URLField(_("Attachment"), max_length=250, blank=True)
-    attachment_short_url = models.URLField(
-        _("Attachment Short URL"),
-        max_length=250,
-        blank=True,
-    )
-    billing_address = models.CharField(_("Billing Address"), max_length=250, blank=True)
-    checkout_short_url = models.URLField(
-        _("Checkout Short URL"),
-        max_length=250,
-        blank=True,
-    )
-    checkout_url = models.URLField(_("Checkout URL"), max_length=250, blank=True)
-    currency_code = models.CharField(_("Currency Code"), max_length=10, blank=True)
-    customer_email = models.EmailField(_("Customer Email"), max_length=250, blank=True)
-    customer_first_name = models.CharField(
-        _("Customer First Name"),
-        max_length=250,
-        blank=True,
-    )
-    customer_last_name = models.CharField(
-        _("Customer Last Name"),
-        max_length=250,
-        blank=True,
-    )
+    currency_code = models.CharField(_("Currency Code"), max_length=10)
+    state = models.CharField(_("State"), max_length=250)
     customer_id = models.CharField(_("Customer ID"), max_length=250, blank=True)
-    customer_phone = models.CharField(_("Customer Phone"), max_length=250, blank=True)
-    due_datetime = models.CharField(_("Due Datetime"), max_length=100, blank=True)
-    email_recipients = models.CharField(
-        _("Email Recipients"),
-        max_length=250,
-        blank=True,
-    )
-    expiration_time = models.CharField(_("Expiration Time"), max_length=100, blank=True)
-    extra = models.JSONField(_("Extra"), blank=True, default=dict)
-    initiator_id = models.CharField(_("Initiator ID"), max_length=250, blank=True)
-    language = models.CharField(_("Language"), max_length=10, blank=True)
-    mode = models.CharField(_("Mode"), max_length=250, blank=True)
-    notifications = models.CharField(_("Notifications"), max_length=250, blank=True)
-    operation = models.CharField(_("Operation"), max_length=250, blank=True)
-    order_no = models.CharField(_("Order No"), max_length=250, blank=True)
-    payment_methods = models.JSONField(
-        _("Payment Methods"),
-        blank=True,
-        default=dict,
-        encoder=PaymentMethodEncoder,
-    )
-    pg_codes = models.JSONField(_("PG Codes"), blank=True, default=dict)
-    qr_code_url = models.URLField(_("QR Code URL"), max_length=250, blank=True)
-    redirect_url = models.URLField(_("Redirect URL"), max_length=250, blank=True)
-    shipping_address = models.CharField(
-        _("Shipping Address"),
-        max_length=250,
-        blank=True,
-    )
-    state = models.CharField(_("State"), max_length=250, blank=True)
-    type = models.CharField(_("Type"), max_length=250, blank=True)
-    vendor_name = models.CharField(_("Vendor Name"), max_length=250, blank=True)
-    webhook_url = models.URLField(_("Webhook URL"), max_length=250, blank=True)
-
+    token = models.CharField(_("Token"), max_length=250, blank=True)
+    agreement = models.JSONField(_("Agreement"), blank=True, default=dict)
+    extra_params = models.JSONField(_("Extra Params"), blank=True, default=dict)
     created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
     updated_at = models.DateTimeField(_("Updated At"), auto_now=True)
 

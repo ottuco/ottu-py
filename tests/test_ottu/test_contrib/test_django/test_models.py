@@ -2,7 +2,8 @@ import json
 
 import pytest
 
-from ottu.contrib.django.models import Checkout, PaymentMethodEncoder, Webhook
+from ottu.contrib.django.models import Checkout, Webhook
+from ottu.json import PaymentMethodEncoder
 from ottu.session import PaymentMethod
 
 pytestmark = pytest.mark.django_db

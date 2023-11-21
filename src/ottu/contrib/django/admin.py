@@ -7,27 +7,23 @@ from .models import Checkout, Webhook
 class CheckoutAdmin(admin.ModelAdmin):
     list_display = (
         "session_id",
+        "type",
+        "payment_type",
         "amount",
         "currency_code",
         "state",
-        "pg_codes",
         "customer_id",
-        "customer_email",
-        "customer_phone",
-        "customer_first_name",
-        "customer_last_name",
-        "created_at",
     )
     search_fields = (
         "session_id",
+        "type",
+        "payment_type",
         "amount",
         "currency_code",
-        "pg_codes",
+        "state",
         "customer_id",
-        "customer_email",
-        "customer_phone",
-        "customer_first_name",
-        "customer_last_name",
+        "token",
+        "agreement",
     )
     list_filter = ["state"]
     ordering = ["-created_at"]
