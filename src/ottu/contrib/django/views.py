@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.http import JsonResponse
 from django.views.generic.base import ContextMixin, View
@@ -7,6 +8,8 @@ from ...errors import WebhookProcessingError
 from ...utils import verify_signature
 from . import conf
 from .models import Webhook
+
+logger = logging.getLogger("ottu-py")
 
 
 class WebhookViewAbstractView(ContextMixin, View):
@@ -49,6 +52,7 @@ class WebhookViewAbstractView(ContextMixin, View):
         return instance
 
     def post(self, request, *args, **kwargs):
+        logger.info(f"Webhook received: {self.data}")
         verified = self.verify()
         if not verified:
             return JsonResponse(

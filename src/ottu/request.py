@@ -1,9 +1,12 @@
+import logging
 from json import JSONDecodeError
 from urllib.parse import urlparse
 
 import httpx
 
 from .mixins import ResponseMixin
+
+logger = logging.getLogger("ottu-py")
 
 
 class OttuPYResponse(ResponseMixin):
@@ -89,6 +92,9 @@ class RequestResponseHandler:
 
     def _process(self) -> OttuPYResponse:
         try:
+            logger.info(
+                f"Sending {self.method} request to {self.url} with args {self.kwargs}",
+            )
             response = self.session.request(
                 method=self.method,
                 url=self.url,
@@ -101,4 +107,15 @@ class RequestResponseHandler:
             return self.process_unknown_error(exc)
 
     def process(self) -> OttuPYResponse:
-        return self._process()
+        response = self._process()
+        if response.success:
+            logger.info(
+                f"Received {response.status_code} response "
+                f"from {self.url} with args {self.kwargs}",
+            )
+        else:
+            logger.error(
+                f"Received {response.status_code} response "
+                f"from {self.url} with args {self.kwargs}",
+            )
+        return response
