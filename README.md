@@ -166,7 +166,7 @@ print(response)
 You can attach the file to session either while creating the session or updating the session using `attachment`
 argument.
 
-`attachment` argument accepts string which represents the path to the file.
+`attachment` argument accepts a string that represents the path to the file.
 
 ```python
 from ottu import Ottu
@@ -220,7 +220,7 @@ print(ottu.session.payment_methods)
 
 ### Operations
 
-All operartions are performed on the `ottu.session` object. Also, these methods accepts either `session_id`
+All operations are performed on the `ottu.session` object. Also, these methods accept either `session_id`
 or `order_no` as an argument. If `session_id` is not passed, then it will use the `session_id` from the `ottu.session`
 object.
 
@@ -386,191 +386,57 @@ response = ottu.cards.delete(type="sandbox", token="your-card-token")
 print(response)
 ```
 
-### Auto Debit
 
-1. Get the PGs that supports auto debit.
-
+### Checkout Autoflow
+Create a checkout session without specifying the PG codes. The PG codes will be automatically
+selected based on the currency code, either from the cache or payment method API.
 ```python
 from ottu import Ottu
 from ottu.auth import APIKeyAuth
+from ottu.enums import TxnType
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
-
-res = ottu.get_payment_methods(plugin="payment_request", tokenizable=True)
-print(res)
-# {
-#     "success": true,
-#     "status_code": 200,
-#     "endpoint": "/b/pbl/v2/payment-methods/",
-#     "response": {
-#         "customer_payment_methods": [],
-#         "payment_methods": [
-#             {
-#                 "code": "ottu_pg_kwd_tkn",
-#                 "name": "ottu_pg_kwd_tkn",
-#                 "pg": "Ottu PG",
-#                 "is_sandbox": true,
-#                 "logo": "https://beta.ottu.net/media/gateway/settings/logos/Visa-MasterCard002_WIcgTQz.png",
-#                 "wallets": [],
-#                 "default_currency": "KWD",
-#                 "accepted_currencies": [
-#                     "KWD",
-#                     "SAR",
-#                     "BHD"
-#                 ],
-#                 "operation": "purchase",
-#                 "operations": [
-#                     "refund"
-#                 ]
-#             },
-#             {
-#                 "code": "auto-debit",
-#                 "name": "auto-debit",
-#                 "pg": "Ottu PG",
-#                 "is_sandbox": true,
-#                 "logo": "https://beta.ottu.net/static/images/pg_icons/master_visa.svg",
-#                 "wallets": [],
-#                 "default_currency": "KWD",
-#                 "accepted_currencies": [
-#                     "KWD"
-#                 ],
-#                 "operation": "purchase",
-#                 "operations": [
-#                     "refund"
-#                 ]
-#             }
-#         ]
-#     },
-#     "error": {}
-# }
-```
-
-2. Specify the PG code during the checkout
-
-```python
-from ottu import Ottu
-from ottu.auth import APIKeyAuth
-
-ottu = Ottu(
-    merchant_id="merchant.id.ottu.dev",
-    auth=APIKeyAuth("your-secret-api-key"),
-    customer_id="your-customer-id"
-)
-
-response = ottu.auto_debit_checkout(
+response = ottu.checkout_autoflow(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
-    pg_codes=["ottu_pg_kwd_tkn"],  # code that matches your criteria (currency, etc.) from the above response
-    customer_phone="+96550000000",
-    order_no="1234567890",
-    agreement={
-        "id": "agreement-id-of-your-choice",
-        # other agreement attributes
-    },
 )
-
-print(response["response"]["checkout_url"])
+print(response)
 ```
 
-3. Complete the checkout manually using the checkout URL.
-4. Now, create the session whenever you want to charge the customer using the saved card.
-    * Get the card token
-       ```python
-      from ottu import Ottu
-      from ottu.auth import APIKeyAuth
+### Auto-debit Autoflow
+Completing the auto-debit transaction without specifying the PG codes. The PG codes will be automatically
+selected based on the currency code from the payment method API. You must pass the value for `token` that represents the saved card token.
 
-       ottu = Ottu(
-           merchant_id="merchant.id.ottu.dev",
-           auth=APIKeyAuth("your-secret-api-key"),
-           customer_id="your-customer-id"
-       )
-
-       response = ottu.cards.get(
-          pg_codes=["ottu_pg_kwd_tkn"] # PG code that used while creating the session
-       )
-       print(response)
-       # {
-       #     "customer_id": "your-customer-id",
-       #     "brand": "MASTERCARD",
-       #     "name_on_card": "JPG",
-       #     "number": "**** 0008",
-       #     "expiry_month": "01",
-       #     "expiry_year": "39",
-       #     "token": "9597918463428402",
-       #     "pg_code": "ottu_pg_kwd_tkn",
-       #     "is_preferred": false,
-       #     "is_expired": false,
-       #     "will_expire_soon": false,
-       #     "cvv_required": true,
-       #     "agreements": [
-       #         "agreement-id-of-your-choice"
-       #     ]
-       # }
-       ```
-    * Create new session (with same or different amount, depending on your use case)
-       ```python
-       response = ottu.auto_debit_checkout(
-           txn_type=TxnType.PAYMENT_REQUEST,
-           amount="20.23",
-           currency_code="KWD",
-           pg_codes=["ottu_pg_kwd_tkn"],
-           customer_phone="+96550000000",
-           order_no="1234567890",
-           agreement={
-               "id": "agreement-id-of-your-choice",
-               # other agreement attributes
-           },
-       )
-
-       print(response["response"]["session_id"])
-       # 809429a6c912990b195e4e60652436fcae587757
-       ```
-    * Charge the customer using the saved card
-       ```python
-       response = ottu.auto_debit(
-           session_id="809429a6c912990b195e4e60652436fcae587757", # value from previous step
-           token ="9597918463428402", # value from previous step
-       )
-       print(response)
-       ```
-
-### Auto Debit (auto-flow)
-
-You can call a single method to charge the customer using a saved card. The method will take care of the PG code and
-tokenized card.
+Note: `otty-py` will automatically fetch the `token` from the DB if you use the Django integration.
 
 ```python
 from ottu import Ottu
 from ottu.auth import APIKeyAuth
+from ottu.enums import TxnType
 
 ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
-response = ottu.auto_flow(
-    is_sandbox=True,
+response = ottu.auto_debit_autoflow(
     txn_type=TxnType.PAYMENT_REQUEST,
     amount="20.23",
     currency_code="KWD",
-    customer_phone="+96550000000",
-    order_no="1234567890",
-    agreement={
-        "id": "agreement-id-of-your-choice",
-        # other agreement attributes
-    },
+   token="your-card-token",
+   agreement={
+            "id": "test-agreement-id",
+            # other agreement attributes
+        },
+
 )
+print(response)
 ```
-
-The `.auto_flow(...)` method is _almost_ identical to the `.auto_debit_checkout(...)` method, except
-
-* `pg_codes` is not required as it will be automatically determined.
-* a new parameter called `is_sandbox` which indicates whether the tokenized card is from sandbox or production.
 
 ## Django Integration
 
@@ -584,7 +450,7 @@ INSTALLED_APPS = [
 ]
 ```
 
-Set values for following settings variables.
+Set values for the following settings variables.
 
 ### Settings
 
@@ -602,7 +468,7 @@ Set values for following settings variables.
 * `OTTU_WEBHOOK_KEY` - Webhook Key (example: `my-secret-webhook-key`)
 * `OTTU_WEBHOOK_URL` - Webhook URL (example: `https://your-host.com/path/to/view/`)
 
-In case of authentication, it is mandatory to set any set of authentication settings.
+In the case of authentication, it is mandatory to set any set of authentication settings.
 
 ### Checkout
 
@@ -624,6 +490,24 @@ response = ottu.checkout(
 
 **Note**: The checkout sessions will be automatically saved (and updated if you configure the webhooks) to the database
 if you use the `ottu` instance.
+
+### Auto-debit Autoflow
+Same as [Auto-debit Autoflow](#auto-debit-autoflow) but it is optional to pass the `token`. If you don't pass the `token`, `ottu-py` will automatically fetch the token from the DB. The token is identified by the `customer_id` and `agreement.id`.
+```python
+from ottu.contrib.django.core.ottu import ottu
+
+response = ottu.auto_debit_autoflow(
+    txn_type=TxnType.PAYMENT_REQUEST,
+    amount="20.23",
+    currency_code="KWD",
+   customer_id="your-customer-id",
+   agreement={
+            "id": "test-agreement-id",
+            # other agreement attributes
+        },
+    ...
+)
+```
 
 ### Webhooks
 
