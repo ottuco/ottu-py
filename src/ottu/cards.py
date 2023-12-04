@@ -15,15 +15,14 @@ class Card:
 
     def _get_cards(
         self,
-        type: str = "sandbox",
         customer_id: typing.Optional[str] = None,
-        pg_codes: typing.Optional[list] = None,
+        pg_codes: typing.Optional[typing.List] = None,
         agreement_id: typing.Optional[str] = None,
     ) -> OttuPYResponse:
         if customer_id is None:
             customer_id = self.ottu.customer_id
         payload = {
-            "type": type,
+            "type": self.ottu.env_type,
             "customer_id": customer_id,
             "pg_codes": pg_codes,
             "agreement_id": agreement_id,
@@ -37,28 +36,36 @@ class Card:
 
     def get_cards(
         self,
-        type: str = "sandbox",
         customer_id: typing.Optional[str] = None,
-        pg_codes: typing.Optional[list] = None,
+        pg_codes: typing.Optional[typing.List] = None,
         agreement_id: typing.Optional[str] = None,
     ) -> dict:
         ottu_py_response = self._get_cards(
-            type=type,
             customer_id=customer_id,
             pg_codes=pg_codes,
             agreement_id=agreement_id,
         )
         return ottu_py_response.as_dict()
 
+    def list(
+        self,
+        customer_id: typing.Optional[str] = None,
+        pg_codes: typing.Optional[typing.List] = None,
+        agreement_id: typing.Optional[str] = None,
+    ) -> dict:
+        return self.get_cards(
+            customer_id=customer_id,
+            pg_codes=pg_codes,
+            agreement_id=agreement_id,
+        )
+
     def get(
         self,
-        type: str = "sandbox",
         customer_id: typing.Optional[str] = None,
-        pg_codes: typing.Optional[list] = None,
+        pg_codes: typing.Optional[typing.List] = None,
         agreement_id: typing.Optional[str] = None,
     ) -> typing.Optional[dict]:
         ottu_py_response = self._get_cards(
-            type=type,
             customer_id=customer_id,
             pg_codes=pg_codes,
             agreement_id=agreement_id,
@@ -73,7 +80,6 @@ class Card:
     def delete(
         self,
         token: str,
-        type: str = "sandbox",
         customer_id: typing.Optional[str] = None,
     ) -> dict:
         customer_id = customer_id or self.ottu.customer_id
@@ -82,7 +88,7 @@ class Card:
             method=HTTPMethod.DELETE,
             params={
                 "customer_id": customer_id,
-                "type": type,
+                "type": self.ottu.env_type,
             },
         )
         return ottu_py_response.as_dict()

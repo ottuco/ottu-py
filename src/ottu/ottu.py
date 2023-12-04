@@ -28,6 +28,7 @@ class Ottu:
         self.auth = auth
         self.customer_id = customer_id
         self.is_sandbox = is_sandbox
+        self.env_type = "sandbox" if is_sandbox else "production"
 
         # Other initializations
         self.request_session = self.__create_session()

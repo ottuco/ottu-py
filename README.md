@@ -352,7 +352,7 @@ ottu = Ottu(
     auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
-response = ottu.cards.list(type="sandbox")
+response = ottu.cards.list()
 print(response)
 ```
 
@@ -367,7 +367,7 @@ ottu = Ottu(
     auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
-response = ottu.cards.get(type="sandbox")
+response = ottu.cards.get()
 print(response)
 ```
 
@@ -382,7 +382,7 @@ ottu = Ottu(
     auth=APIKeyAuth("your-secret-api-key"),
     customer_id="your-customer-id"
 )
-response = ottu.cards.delete(type="sandbox", token="your-card-token")
+response = ottu.cards.delete(token="your-card-token")
 print(response)
 ```
 
@@ -497,15 +497,15 @@ Same as [Auto-debit Autoflow](#auto-debit-autoflow) but it is optional to pass t
 from ottu.contrib.django.core.ottu import ottu
 
 response = ottu.auto_debit_autoflow(
-    txn_type=TxnType.PAYMENT_REQUEST,
-    amount="20.23",
-    currency_code="KWD",
-   customer_id="your-customer-id",
-   agreement={
+      txn_type=TxnType.PAYMENT_REQUEST,
+      amount="20.23",
+      currency_code="KWD",
+      customer_id="your-customer-id",
+      agreement={
             "id": "test-agreement-id",
             # other agreement attributes
         },
-    ...
+      ...
 )
 ```
 

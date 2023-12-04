@@ -5,6 +5,19 @@ from ottu.cards import Card
 
 
 class TestOttuGetCards:
+    def test_list_signature(
+        self,
+        ottu_instance,
+    ):
+        parameters = dict(signature(Card.list).parameters)
+        parameters.pop("self")
+        required_fields = {
+            name for name, param in parameters.items() if param.default is param.empty
+        }
+        optional_fields = set(parameters) - required_fields
+        assert required_fields == set()
+        assert optional_fields == {"agreement_id", "customer_id", "pg_codes"}
+
     def test_get_cards_signature(
         self,
         ottu_instance,
@@ -16,7 +29,7 @@ class TestOttuGetCards:
         }
         optional_fields = set(parameters) - required_fields
         assert required_fields == set()
-        assert optional_fields == {"agreement_id", "customer_id", "pg_codes", "type"}
+        assert optional_fields == {"agreement_id", "customer_id", "pg_codes"}
 
     def test_get_signature(
         self,
@@ -29,7 +42,7 @@ class TestOttuGetCards:
         }
         optional_fields = set(parameters) - required_fields
         assert required_fields == set()
-        assert optional_fields == {"agreement_id", "customer_id", "pg_codes", "type"}
+        assert optional_fields == {"agreement_id", "customer_id", "pg_codes"}
 
     def test_delete_signature(
         self,
@@ -42,7 +55,34 @@ class TestOttuGetCards:
         }
         optional_fields = set(parameters) - required_fields
         assert required_fields == {"token"}
-        assert optional_fields == {"customer_id", "type"}
+        assert optional_fields == {"customer_id"}
+
+    def test_get_card_lis(
+        self,
+        httpx_mock,
+        auth_api_key,
+        response_user_cards,
+    ):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/card/",
+            method="POST",
+            status_code=200,
+            json=response_user_cards,
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+
+        # Make the request
+        response = Card(ottu).list()
+
+        # Assert the responses
+        expected_response = {
+            "success": True,
+            "status_code": 200,
+            "endpoint": "/b/pbl/v2/card/",
+            "error": {},
+            "response": response_user_cards,
+        }
+        assert response == expected_response
 
     def test_get_cards_200(
         self,
