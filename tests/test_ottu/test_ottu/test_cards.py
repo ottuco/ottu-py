@@ -18,19 +18,6 @@ class TestOttuGetCards:
         assert required_fields == set()
         assert optional_fields == {"agreement_id", "customer_id", "pg_codes", "type"}
 
-    def test_list_signature(
-        self,
-        ottu_instance,
-    ):
-        parameters = dict(signature(Card.list).parameters)
-        parameters.pop("self")
-        required_fields = {
-            name for name, param in parameters.items() if param.default is param.empty
-        }
-        optional_fields = set(parameters) - required_fields
-        assert required_fields == set()
-        assert optional_fields == {"agreement_id", "customer_id", "pg_codes", "type"}
-
     def test_get_signature(
         self,
         ottu_instance,

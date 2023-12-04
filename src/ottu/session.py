@@ -1,8 +1,10 @@
 import typing
 from dataclasses import dataclass
 
+from . import urls
+from .decorators import interruption_handler
 from .enums import HTTPMethod, TxnType
-from .errors import ValidationError
+from .errors import APIInterruptError, ValidationError
 from .mixins import AsDictMixin
 from .request import OttuPYResponse
 from .utils import remove_empty_values
@@ -370,71 +372,6 @@ class Session:
             self.ottu._update_session(session)
         return ottu_py_response.as_dict()
 
-    def auto_debit_checkout(
-        self,
-        txn_type: TxnType,
-        amount: str,
-        currency_code: str,
-        pg_codes: list[str],
-        agreement: dict,
-        customer_id: typing.Optional[str] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        card_acceptance_criteria: typing.Optional[dict] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
-    ):
-        return self.create(
-            txn_type=txn_type,
-            amount=amount,
-            currency_code=currency_code,
-            pg_codes=pg_codes,
-            payment_type="auto_debit",
-            customer_id=customer_id,
-            customer_email=customer_email,
-            customer_phone=customer_phone,
-            customer_first_name=customer_first_name,
-            customer_last_name=customer_last_name,
-            agreement=agreement,
-            card_acceptance_criteria=card_acceptance_criteria,
-            attachment=attachment,
-            billing_address=billing_address,
-            due_datetime=due_datetime,
-            email_recipients=email_recipients,
-            expiration_time=expiration_time,
-            extra=extra,
-            generate_qr_code=generate_qr_code,
-            language=language,
-            mode=mode,
-            notifications=notifications,
-            order_no=order_no,
-            product_type=product_type,
-            redirect_url=redirect_url,
-            shopping_address=shopping_address,
-            shortify_attachment_url=shortify_attachment_url,
-            shortify_checkout_url=shortify_checkout_url,
-            vendor_name=vendor_name,
-            webhook_url=webhook_url,
-        )
-
     def auto_debit(self, token: str, session_id: str) -> dict:
         payload = {
             "session_id": session_id,
@@ -558,3 +495,224 @@ class Session:
         if ottu_py_response.success:
             self.refresh()
         return ottu_py_response.as_dict()
+
+    def _get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> OttuPYResponse:
+        payload = {
+            "plugin": plugin,
+            "currencies": currencies,
+            "customer_id": customer_id,
+            "operation": operation,
+            "tokenizable": tokenizable,
+            "pg_names": pg_names,
+            "type": "sandbox" if self.ottu.is_sandbox else "production",
+        }
+        payload = remove_empty_values(payload)
+        return self.ottu.send_request(
+            path=urls.PAYMENT_METHODS,
+            method=HTTPMethod.POST,
+            json=payload,
+        )
+
+    def get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> dict:
+        return self._get_payment_methods(
+            plugin=plugin,
+            currencies=currencies,
+            customer_id=customer_id,
+            operation=operation,
+            tokenizable=tokenizable,
+            pg_names=pg_names,
+        ).as_dict()
+
+    def get_pg_codes(self, plugin, currency, tokenizable=False) -> list:
+        if self.payment_methods:
+            return [pm.code for pm in self.payment_methods]
+
+        response = self.get_payment_methods(
+            plugin=plugin,
+            currencies=[
+                currency,
+            ],
+            tokenizable=tokenizable,
+        )
+        if not response["success"]:
+            raise APIInterruptError(**response)
+        return [pm["code"] for pm in response["response"]["payment_methods"]]
+
+    def get_auto_debit_pg_codes(self, plugin, currency) -> list:
+        # There is no way to identify the
+        # cached payment method supports auto debit or not.
+        # So, we are calling the API again.
+        response = self.get_payment_methods(
+            plugin=plugin,
+            currencies=[
+                currency,
+            ],
+            tokenizable=True,
+        )
+        if not response["success"]:
+            raise APIInterruptError(**response)
+        return [pm["code"] for pm in response["response"]["payment_methods"]]
+
+    def get_token_from_db(self, agreement, customer_id) -> str:
+        raise NotImplementedError("Please implement this method in your subclass")
+
+    @interruption_handler
+    def checkout_autoflow(
+        self,
+        txn_type: TxnType,
+        amount: str,
+        currency_code: str,
+        payment_type: str = "one_off",
+        customer_id: typing.Optional[str] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        agreement: typing.Optional[dict] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+    ):
+        pg_codes = self.get_pg_codes(plugin=txn_type, currency=currency_code)
+        return self.create(
+            txn_type=txn_type,
+            amount=amount,
+            currency_code=currency_code,
+            pg_codes=pg_codes,
+            payment_type=payment_type,
+            customer_id=customer_id,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            customer_first_name=customer_first_name,
+            customer_last_name=customer_last_name,
+            agreement=agreement,
+            card_acceptance_criteria=card_acceptance_criteria,
+            attachment=attachment,
+            billing_address=billing_address,
+            due_datetime=due_datetime,
+            email_recipients=email_recipients,
+            expiration_time=expiration_time,
+            extra=extra,
+            generate_qr_code=generate_qr_code,
+            language=language,
+            mode=mode,
+            notifications=notifications,
+            order_no=order_no,
+            product_type=product_type,
+            redirect_url=redirect_url,
+            shopping_address=shopping_address,
+            shortify_attachment_url=shortify_attachment_url,
+            shortify_checkout_url=shortify_checkout_url,
+            vendor_name=vendor_name,
+            webhook_url=webhook_url,
+        )
+
+    @interruption_handler
+    def auto_debit_autoflow(
+        self,
+        txn_type: TxnType,
+        amount: str,
+        currency_code: str,
+        customer_id: str,
+        agreement: dict,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+        token: typing.Optional[str] = None,
+    ):
+        """
+        Completes the auto debit flow by automatically
+        identifying the "latest" payment method and the token.
+        """
+        if not token:
+            token = self.get_token_from_db(agreement=agreement, customer_id=customer_id)
+
+        pg_codes = self.get_auto_debit_pg_codes(plugin=txn_type, currency=currency_code)
+        checkout_response = self.create(
+            txn_type=txn_type,
+            amount=amount,
+            currency_code=currency_code,
+            pg_codes=pg_codes,
+            payment_type="auto_debit",
+            customer_id=customer_id,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            customer_first_name=customer_first_name,
+            customer_last_name=customer_last_name,
+            agreement=agreement,
+            card_acceptance_criteria=card_acceptance_criteria,
+            attachment=attachment,
+            billing_address=billing_address,
+            due_datetime=due_datetime,
+            email_recipients=email_recipients,
+            expiration_time=expiration_time,
+            extra=extra,
+            generate_qr_code=generate_qr_code,
+            language=language,
+            mode=mode,
+            notifications=notifications,
+            order_no=order_no,
+            product_type=product_type,
+            redirect_url=redirect_url,
+            shopping_address=shopping_address,
+            shortify_attachment_url=shortify_attachment_url,
+            shortify_checkout_url=shortify_checkout_url,
+            vendor_name=vendor_name,
+            webhook_url=webhook_url,
+        )
+        if not checkout_response["success"]:
+            raise APIInterruptError(**checkout_response)
+        session_id = checkout_response["response"]["session_id"]
+        return self.auto_debit(token=token, session_id=session_id)

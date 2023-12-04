@@ -70,20 +70,6 @@ class Card:
                 pass
         return None
 
-    def list(
-        self,
-        type: str = "sandbox",
-        customer_id: typing.Optional[str] = None,
-        pg_codes: typing.Optional[list] = None,
-        agreement_id: typing.Optional[str] = None,
-    ) -> dict:
-        return self.get_cards(
-            type=type,
-            customer_id=customer_id,
-            pg_codes=pg_codes,
-            agreement_id=agreement_id,
-        )
-
     def delete(
         self,
         token: str,
