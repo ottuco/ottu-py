@@ -15,3 +15,5 @@ ABSTRACT_CHECKOUT_MODEL = getattr(settings, "OTTU_ABSTRACT_CHECKOUT_MODEL", Fals
 ABSTRACT_WEBHOOK_MODEL = getattr(settings, "OTTU_ABSTRACT_WEBHOOK_MODEL", False)
 WEBHOOK_KEY = getattr(settings, "OTTU_WEBHOOK_KEY", "")
 WEBHOOK_URL = getattr(settings, "OTTU_WEBHOOK_URL", "")
+
+IS_SANDBOX = getattr(settings, "OTTU_IS_SANDBOX", False)

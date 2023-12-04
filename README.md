@@ -20,7 +20,7 @@ ottu = Ottu(
 )
 ```
 
-Alternatively, you can pass the `username` and `password` instead of `api_key`.
+Instead of `APIKeyAuth`, you can also use `BasicAuth` to authenticate the API calls.
 
 ```python
 from ottu import Ottu
@@ -35,7 +35,7 @@ ottu = Ottu(
 )
 ```
 
-APart from these (`host_url`, `api_key`, `username`, `password`), you can also pass the `customer_id`. This is used
+Apart from these `merchant_id` and `auth`, you can also pass the `customer_id` and `is_sandbox` values. This is used
 while calling the checkout API and other situations.
 
 ```python
@@ -467,6 +467,7 @@ Set values for the following settings variables.
 * `OTTU_MERCHANT_ID` - Merchant ID (example: `merchant.id.ottu.dev`)
 * `OTTU_WEBHOOK_KEY` - Webhook Key (example: `my-secret-webhook-key`)
 * `OTTU_WEBHOOK_URL` - Webhook URL (example: `https://your-host.com/path/to/view/`)
+* `OTTU_IS_SANDBOX` - Sandbox environment or not (example: `True` or `False`). Default is `False`.
 
 In the case of authentication, it is mandatory to set any set of authentication settings.
 

@@ -34,6 +34,7 @@ def _generate_instance():
     return Ottu(
         merchant_id=conf.MERCHANT_ID,
         auth=basic_auth or api_key_auth,
+        is_sandbox=conf.IS_SANDBOX,
     )
 
 
