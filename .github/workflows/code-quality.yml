@@ -39,4 +39,4 @@ jobs:
         pip install .[test]
     - name: Run Tests
       run: |
-        python -m pytest --cov=src
+        python -m pytest --cov=src --cov-fail-under=80
