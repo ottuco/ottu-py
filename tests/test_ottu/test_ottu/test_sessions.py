@@ -328,9 +328,9 @@ class TestOps:
             ("cancel", []),
             ("expire", []),
             ("delete", []),
-            ("capture", ["amount"]),
-            ("refund", ["amount"]),
-            ("void", []),
+            ("capture", ["amount", "tracking_key"]),
+            ("refund", ["amount", "tracking_key"]),
+            ("void", ["tracking_key"]),
         ],
     )
     def test_signature(
@@ -347,6 +347,33 @@ class TestOps:
         optional_fields = set(parameters) - required_fields
         assert required_fields == signature_ops["required_fields"]
         assert optional_fields == signature_ops["optional_fields"] | set(extra_params)
+
+    @pytest.mark.parametrize(
+        "op_name",
+        ["capture", "refund", "void"],
+    )
+    def test_op_method_success_with_tracking_key(
+        self,
+        ottu_instance,
+        httpx_mock,
+        response_checkout,
+        op_name,
+    ):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/operation/",
+            method="POST",
+            status_code=200,
+            json={"detail": "Success"},
+        )
+
+        method = getattr(ottu_instance.session, op_name)
+        response = method(
+            order_id="test-order-id",
+            session_id="test-session-id",
+            tracking_key="test-tracking-key",
+        )
+
+        assert response["success"] is True
 
     @pytest.mark.parametrize(
         "session_id, order_id",

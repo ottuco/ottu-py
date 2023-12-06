@@ -390,6 +390,7 @@ class Session:
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
         amount: typing.Optional[str] = None,
+        headers: typing.Optional[dict] = None,
     ) -> OttuPYResponse:
         if session_id is None:
             session_id = self.session_id
@@ -408,6 +409,7 @@ class Session:
             path=self.url_ops,
             method=HTTPMethod.POST,
             json=payload,
+            headers=headers,
         )
 
     def cancel(
@@ -455,12 +457,19 @@ class Session:
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
         amount: typing.Optional[str] = None,
+        tracking_key: typing.Optional[str] = None,
     ) -> dict:
+        headers = None
+        if tracking_key:
+            headers = {
+                "Tracking-Key": tracking_key,
+            }
         ottu_py_response = self.ops(
             operation="capture",
             order_id=order_id,
             session_id=session_id,
             amount=amount,
+            headers=headers,
         )
         if ottu_py_response.success:
             self.refresh()
@@ -471,12 +480,19 @@ class Session:
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
         amount: typing.Optional[str] = None,
+        tracking_key: typing.Optional[str] = None,
     ) -> dict:
+        headers = None
+        if tracking_key:
+            headers = {
+                "Tracking-Key": tracking_key,
+            }
         ottu_py_response = self.ops(
             operation="refund",
             order_id=order_id,
             session_id=session_id,
             amount=amount,
+            headers=headers,
         )
         if ottu_py_response.success:
             self.refresh()
@@ -486,11 +502,18 @@ class Session:
         self,
         order_id: typing.Optional[str] = None,
         session_id: typing.Optional[str] = None,
+        tracking_key: typing.Optional[str] = None,
     ) -> dict:
+        headers = None
+        if tracking_key:
+            headers = {
+                "Tracking-Key": tracking_key,
+            }
         ottu_py_response = self.ops(
             operation="void",
             order_id=order_id,
             session_id=session_id,
+            headers=headers,
         )
         if ottu_py_response.success:
             self.refresh()

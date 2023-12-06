@@ -307,7 +307,7 @@ ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key"),
 )
-response = ottu.session.capture(session_id="your-session-id", amount="20.23")
+response = ottu.session.capture(session_id="your-session-id", amount="20.23", tracking_key="your-tracking-key")
 print(response)
 ```
 
@@ -321,7 +321,7 @@ ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key"),
 )
-response = ottu.session.refund(session_id="your-session-id", amount="20.23")
+response = ottu.session.refund(session_id="your-session-id", amount="20.23", tracking_key="your-tracking-key")
 print(response)
 ```
 
@@ -335,7 +335,7 @@ ottu = Ottu(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key"),
 )
-response = ottu.session.void(session_id="your-session-id")
+response = ottu.session.void(session_id="your-session-id", tracking_key="your-tracking-key")
 print(response)
 ```
 
