@@ -390,6 +390,9 @@ print(response)
 ### Checkout Autoflow
 Create a checkout session without specifying the PG codes. The PG codes will be automatically
 selected based on the currency code, either from the cache or payment method API.
+
+Behind the scenes, `ottu-py` will automatically fetch the payment methods from the cache or payment method API and
+select the PG codes based on the currency code.
 ```python
 from ottu import Ottu
 from ottu.auth import APIKeyAuth
@@ -412,7 +415,8 @@ print(response)
 Completing the auto-debit transaction without specifying the PG codes. The PG codes will be automatically
 selected based on the currency code from the payment method API. You must pass the value for `token` that represents the saved card token.
 
-Note: `otty-py` will automatically fetch the `token` from the DB if you use the Django integration.
+Behind the scenes, `ottu-py` will automatically fetch the token from the database (only if you use the Django integration) and
+select the PG codes based on the currency code by calling the payment method API.
 
 ```python
 from ottu import Ottu
@@ -425,14 +429,42 @@ ottu = Ottu(
     customer_id="your-customer-id"
 )
 response = ottu.auto_debit_autoflow(
-    txn_type=TxnType.PAYMENT_REQUEST,
-    amount="20.23",
-    currency_code="KWD",
+   txn_type=TxnType.PAYMENT_REQUEST,
+   amount="20.23",
+   currency_code="KWD",
    token="your-card-token",
    agreement={
-            "id": "test-agreement-id",
-            # other agreement attributes
-        },
+         "id": "test-agreement-id",
+         # other agreement attributes
+     },
+
+)
+print(response)
+```
+
+Optionally, you can pass the `pg_codes` to `auto_debit_autoflow(...)` method. If you pass the `pg_codes`, then the
+`ottu-py` will not call the payment method API to fetch the PG codes.
+
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+from ottu.enums import TxnType
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+    customer_id="your-customer-id"
+)
+response = ottu.auto_debit_autoflow(
+   txn_type=TxnType.PAYMENT_REQUEST,
+   amount="20.23",
+   currency_code="KWD",
+   token="your-card-token",
+   pg_codes=["ottu_pg"],
+   agreement={
+      "id": "test-agreement-id",
+      # other agreement attributes
+   },
 
 )
 print(response)
@@ -556,6 +588,42 @@ verified = verify_signature(
    webhook_key=hmac_secret_key_recieved_from_ottu # HMAC Secret Key received from Ottu
 )
 ```
+
+### API Response Structure
+
+All API calls must have the following structure.
+
+```json
+{
+   "success": true,
+   "status_code": 200,
+   "endpoint": "/path/to/api/endpoint/",
+   "response": {},
+   "error": {}
+}
+```
+* `success` - Boolean value that represents the success of the API call.
+* `status_code` - HTTP status code of the API call.
+* `endpoint` - API endpoint of the last API call.
+* `response` - Response from the API call.
+* `error` - Error from the API call.
+
+If the call was `success`, the `response` field will be present and the `error` field will be empty, and vice-versa.
+
+In most of the cases, the `error` will be a JSON object with a key of `detail` and value of the error message.
+
+```json
+{
+   "success": false,
+   "status_code": 400,
+   "endpoint": "/path/to/api/endpoint/",
+   "response": {},
+   "error": {
+      "detail": "Error message"
+   }
+}
+```
+
 ## Test
 
 ```bash
