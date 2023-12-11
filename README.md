@@ -1,9 +1,11 @@
 # ottu-py
 
+[![PyPI version](https://img.shields.io/pypi/v/ottu-py.svg)](https://pypi.python.org/pypi/ottu-py)
+
 ## Installation
 
 ```bash
-pip install git+https://github.com/ottuco/ottu-py.git@session-apis
+pip install ottu-py
 ```
 
 # APIs
