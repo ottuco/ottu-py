@@ -108,6 +108,7 @@ def signature_info_auto_debit_autoflow():
         "currency_code",
     }
     optional_fields = {
+        "pg_codes",
         "attachment",
         "billing_address",
         "card_acceptance_criteria",

@@ -225,6 +225,45 @@ class TestCheckoutAutoDebitAutoFlow:
         }
         assert response == expected_response
 
+    def test_auto_debit_autoflow_with_pg_codes(
+        self,
+        httpx_mock,
+        response_payment_methods,
+        auth_api_key,
+        payload_auto_debit_autoflow,
+        response_checkout,
+        response_auto_debit,
+    ):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/checkout/v1/pymt-txn/",
+            method="POST",
+            status_code=200,
+            json=response_checkout,
+        )
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/auto-debit/",
+            method="POST",
+            status_code=200,
+            json=response_auto_debit,
+        )
+
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+
+        response = ottu.auto_debit_autoflow(
+            token="test-token",
+            pg_codes=["ottu_pg_kwd_tkn"],
+            **payload_auto_debit_autoflow,
+        )
+
+        expected_response = {
+            "success": True,
+            "status_code": 200,
+            "endpoint": "/b/pbl/v2/auto-debit/",
+            "error": {},
+            "response": response_auto_debit,
+        }
+        assert response == expected_response
+
     def test_auto_debit_autoflow_pymt_mthd_error(
         self,
         httpx_mock,

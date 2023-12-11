@@ -670,6 +670,7 @@ class Session:
         currency_code: str,
         customer_id: str,
         agreement: dict,
+        pg_codes: typing.Optional[list[str]] = None,
         customer_email: typing.Optional[str] = None,
         customer_phone: typing.Optional[str] = None,
         customer_first_name: typing.Optional[str] = None,
@@ -701,8 +702,11 @@ class Session:
         """
         if not token:
             token = self.get_token_from_db(agreement=agreement, customer_id=customer_id)
-
-        pg_codes = self.get_auto_debit_pg_codes(plugin=txn_type, currency=currency_code)
+        if not pg_codes:
+            pg_codes = self.get_auto_debit_pg_codes(
+                plugin=txn_type,
+                currency=currency_code,
+            )
         checkout_response = self.create(
             txn_type=txn_type,
             amount=amount,
