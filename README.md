@@ -8,6 +8,12 @@
 pip install ottu-py
 ```
 
+For Django integration, use the following command.
+
+```bash
+pip install ottu-py[django]
+```
+
 # APIs
 
 ## Initialization

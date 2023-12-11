@@ -43,6 +43,11 @@ dependencies = [
 django = [
     "django<=4.2"
 ]
+all = [
+    "ottu-py[django]"
+]
+
+# for test/dev purposes
 test = [
     "pytest==7.4.3",
     "pytest-django==4.7.0",
@@ -58,7 +63,7 @@ lint-and-formatting = [
     "pre-commit",
     "mypy"
 ]
-dev = ["ottu-py[test, lint-and-formatting]", "bump2version~=1.0.1"]
+dev = ["ottu-py[all, test, lint-and-formatting]", "bump2version~=1.0.1"]
 
 [project.urls]
 "Homepage" = "https://github.com/ottuco/ottu-py"
