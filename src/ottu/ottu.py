@@ -24,6 +24,7 @@ class Ottu:
         customer_id: typing.Optional[str] = None,
         is_sandbox: bool = True,
     ) -> None:
+        self.merchant_id = merchant_id
         self.host_url = f"https://{merchant_id}"
         self.auth = auth
         self.customer_id = customer_id
@@ -295,3 +296,6 @@ class Ottu:
             headers=headers,
             **kwargs,
         )
+
+    def __repr__(self):
+        return f"Ottu({self.merchant_id})"

@@ -27,11 +27,8 @@ class PaymentMethod(AsDictMixin):
     flow: typing.Optional[str] = None
     redirect_url: typing.Optional[str] = None
 
-    def __str__(self):
-        return f"PaymentMethod({self.code or '######'})"
-
     def __repr__(self):
-        return str(self)
+        return f"PaymentMethod({self.code or '######'})"
 
 
 class Session:
@@ -86,11 +83,8 @@ class Session:
                 for payment_method in payment_methods
             ]
 
-    def __str__(self):
-        return f"Session({self.session_id or '######'})"
-
     def __repr__(self):
-        return str(self)
+        return f"Session({self.session_id or '######'})"
 
     def __bool__(self):
         return bool(self.session_id)
