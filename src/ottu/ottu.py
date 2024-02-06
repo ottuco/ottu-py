@@ -271,3 +271,27 @@ class Ottu:
             webhook_url=webhook_url,
             token=token,
         )
+
+    def raw(
+        self,
+        method: str,
+        path: str,
+        headers: typing.Optional[dict] = None,
+        **kwargs,
+    ):
+        """
+        To send any sort of http requests to the server.
+            method: str - HTTP method name.
+                Eg: GET, POST, PUT, DELETE, etc.
+            path: str - The path of the request.
+                Eg: /b/api/v1/dashboard/statistics
+            headers: dict - Optional headers to be sent with the request.
+            kwargs: dict - Optional parameters to be sent with the request.
+                Supports all the parameters that `httpx.Client.send` supports.
+        """
+        return self.send_request(
+            path=path,
+            method=method,
+            headers=headers,
+            **kwargs,
+        )
