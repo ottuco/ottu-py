@@ -3,10 +3,12 @@ import typing
 import httpx
 from httpx import Auth
 
+from . import urls
 from .cards import Card
-from .enums import TxnType
+from .enums import HTTPMethod, TxnType
 from .request import OttuPYResponse, RequestResponseHandler
 from .session import Session
+from .utils import remove_empty_values
 
 
 class Ottu:
@@ -295,6 +297,49 @@ class Ottu:
             method=method,
             headers=headers,
             **kwargs,
+        )
+
+    def get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> dict:
+        return self._get_payment_methods(
+            plugin=plugin,
+            currencies=currencies,
+            customer_id=customer_id,
+            operation=operation,
+            tokenizable=tokenizable,
+            pg_names=pg_names,
+        ).as_dict()
+
+    def _get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> OttuPYResponse:
+        payload = {
+            "plugin": plugin,
+            "currencies": currencies,
+            "customer_id": customer_id,
+            "operation": operation,
+            "tokenizable": tokenizable,
+            "pg_names": pg_names,
+            "type": "sandbox" if self.is_sandbox else "production",
+        }
+        payload = remove_empty_values(payload)
+        return self.send_request(
+            path=urls.PAYMENT_METHODS,
+            method=HTTPMethod.POST,
+            json=payload,
         )
 
     def __repr__(self):
