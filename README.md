@@ -635,6 +635,26 @@ The `ottu-py` supports a few authentication methods, usually suitable in most of
         )
     )
     ```
+### Payment Methods
+You can call the `Ottu.get_payment_methods(...)` method to get the available payment methods for the given merchant.
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+)
+response = ottu.get_payment_methods(
+    plugin="payment_request",
+    currencies=["KWD", "USD"],
+    customer_id="your-customer-id",
+    operation="purchase",
+    tokenizable=False,
+    pg_names=[]
+)
+print(response)
+```
 
 ### Webhook Verification
 You can verify the webhook signature using `verify_signature(...)` function.
