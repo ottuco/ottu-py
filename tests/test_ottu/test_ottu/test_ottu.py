@@ -32,6 +32,22 @@ class TestOttuMisc:
         cards_2 = ottu.cards
         assert cards_1 is cards_2
 
+    def test_raw_method(self, auth_api_key, httpx_mock):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/api/v1/dashboard/statistics",
+            method="GET",
+            status_code=200,
+            json={"message": "success"},
+            match_headers={"Custom-Header": "Custom-Value"},
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        response = ottu.raw(
+            method="GET",
+            path="/b/api/v1/dashboard/statistics",
+            headers={"Custom-Header": "Custom-Value"},
+        )
+        assert response.status_code == 200
+
 
 class TestOttuCheckoutAutoFlow(MethodRefMixin):
     def get_method_ref(self):

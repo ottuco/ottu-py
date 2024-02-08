@@ -92,3 +92,6 @@ class Card:
             },
         )
         return ottu_py_response.as_dict()
+
+    def __repr__(self):
+        return f"Card({self.ottu.session.customer_id})"

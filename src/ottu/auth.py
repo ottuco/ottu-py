@@ -3,6 +3,11 @@ import typing
 import httpx
 from httpx import Auth, BasicAuth as _BasicAuth, Request
 
+try:
+    from django.core.cache import cache  # pragma: no cover
+except ImportError:  # pragma: no cover
+    cache = None  # pragma: no cover
+
 
 class BasicAuth(_BasicAuth):
     def __bool__(self):
@@ -35,10 +40,21 @@ class APIKeyAuth(Auth):
 
 class KeycloakAuthBase:
     grant_type: str
+    namespace = "keycloak"
 
-    def __init__(self, host: str, realm: str, *args, **kwargs):
+    def __init__(
+        self,
+        host: str,
+        realm: str,
+        caching: bool = False,
+        cache_key="acc_tok",
+        *args,
+        **kwargs,
+    ):
         self.host = host
         self.realm = realm
+        self.caching = caching
+        self.cache_key = cache_key
 
     @property
     def token_url(self) -> str:
@@ -47,15 +63,44 @@ class KeycloakAuthBase:
             f"{self.realm}/protocol/openid-connect/token"
         )
 
+    @property
+    def cache_key_full(self) -> str:
+        return f"{self.namespace}:{self.realm}:{self.cache_key}"
+
     def get_token_request_payload(self) -> dict:
         return {"grant_type": self.grant_type}
 
-    def get_token(self) -> str:
+    def _get_token(self):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         data = self.get_token_request_payload()
         response = httpx.post(url=self.token_url, data=data, headers=headers)
         response.raise_for_status()
-        return response.json().get("access_token")
+        response_json = response.json()
+        access_token = response_json["access_token"]
+        ttl = response_json["expires_in"]
+        return access_token, ttl
+
+    def get_token_from_cache(self):
+        if cache is None:
+            # During unittests, the `cache` is always available
+            return None  # pragma: no cover
+        return cache.get(self.cache_key_full)
+
+    def set_token_in_cache(self, token: str, ttl: int):
+        if cache is None:
+            # During unittests, the `cache` is always available
+            return None  # pragma: no cover
+        cache.set(self.cache_key_full, token, timeout=ttl)
+
+    def get_token(self) -> str:
+        if self.caching:
+            token = self.get_token_from_cache()
+            if token:
+                return token
+        token, ttl = self._get_token()
+        if self.caching:
+            self.set_token_in_cache(token, ttl)
+        return token
 
     def auth_flow(self, request: Request):
         access_token = self.get_token()
@@ -72,8 +117,8 @@ class KeycloakPasswordAuth(KeycloakAuthBase, Auth):
         username: str,
         password: str,
         client_id: str,
-        *args,
         client_secret: typing.Optional[str] = None,
+        *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
