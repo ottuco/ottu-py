@@ -3,10 +3,12 @@ import typing
 import httpx
 from httpx import Auth
 
+from . import urls
 from .cards import Card
-from .enums import TxnType
+from .enums import HTTPMethod, TxnType
 from .request import OttuPYResponse, RequestResponseHandler
 from .session import Session
+from .utils import remove_empty_values
 
 
 class Ottu:
@@ -24,6 +26,7 @@ class Ottu:
         customer_id: typing.Optional[str] = None,
         is_sandbox: bool = True,
     ) -> None:
+        self.merchant_id = merchant_id
         self.host_url = f"https://{merchant_id}"
         self.auth = auth
         self.customer_id = customer_id
@@ -271,3 +274,73 @@ class Ottu:
             webhook_url=webhook_url,
             token=token,
         )
+
+    def raw(
+        self,
+        method: str,
+        path: str,
+        headers: typing.Optional[dict] = None,
+        **kwargs,
+    ):
+        """
+        To send any sort of http requests to the server.
+            method: str - HTTP method name.
+                Eg: GET, POST, PUT, DELETE, etc.
+            path: str - The path of the request.
+                Eg: /b/api/v1/dashboard/statistics
+            headers: dict - Optional headers to be sent with the request.
+            kwargs: dict - Optional parameters to be sent with the request.
+                Supports all the parameters that `httpx.Client.send` supports.
+        """
+        return self.send_request(
+            path=path,
+            method=method,
+            headers=headers,
+            **kwargs,
+        )
+
+    def get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> dict:
+        return self._get_payment_methods(
+            plugin=plugin,
+            currencies=currencies,
+            customer_id=customer_id,
+            operation=operation,
+            tokenizable=tokenizable,
+            pg_names=pg_names,
+        ).as_dict()
+
+    def _get_payment_methods(
+        self,
+        plugin,
+        currencies: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        operation: str = "purchase",
+        tokenizable: bool = False,
+        pg_names: typing.Optional[list[str]] = None,
+    ) -> OttuPYResponse:
+        payload = {
+            "plugin": plugin,
+            "currencies": currencies,
+            "customer_id": customer_id,
+            "operation": operation,
+            "tokenizable": tokenizable,
+            "pg_names": pg_names,
+            "type": "sandbox" if self.is_sandbox else "production",
+        }
+        payload = remove_empty_values(payload)
+        return self.send_request(
+            path=urls.PAYMENT_METHODS,
+            method=HTTPMethod.POST,
+            json=payload,
+        )
+
+    def __repr__(self):
+        return f"Ottu({self.merchant_id})"

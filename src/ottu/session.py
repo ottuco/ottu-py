@@ -1,7 +1,6 @@
 import typing
 from dataclasses import dataclass
 
-from . import urls
 from .decorators import interruption_handler
 from .enums import HTTPMethod, TxnType
 from .errors import APIInterruptError, ValidationError
@@ -27,11 +26,8 @@ class PaymentMethod(AsDictMixin):
     flow: typing.Optional[str] = None
     redirect_url: typing.Optional[str] = None
 
-    def __str__(self):
-        return f"PaymentMethod({self.code or '######'})"
-
     def __repr__(self):
-        return str(self)
+        return f"PaymentMethod({self.code or '######'})"
 
 
 class Session:
@@ -86,11 +82,8 @@ class Session:
                 for payment_method in payment_methods
             ]
 
-    def __str__(self):
-        return f"Session({self.session_id or '######'})"
-
     def __repr__(self):
-        return str(self)
+        return f"Session({self.session_id or '######'})"
 
     def __bool__(self):
         return bool(self.session_id)
@@ -519,54 +512,11 @@ class Session:
             self.refresh()
         return ottu_py_response.as_dict()
 
-    def _get_payment_methods(
-        self,
-        plugin,
-        currencies: typing.Optional[list[str]] = None,
-        customer_id: typing.Optional[str] = None,
-        operation: str = "purchase",
-        tokenizable: bool = False,
-        pg_names: typing.Optional[list[str]] = None,
-    ) -> OttuPYResponse:
-        payload = {
-            "plugin": plugin,
-            "currencies": currencies,
-            "customer_id": customer_id,
-            "operation": operation,
-            "tokenizable": tokenizable,
-            "pg_names": pg_names,
-            "type": "sandbox" if self.ottu.is_sandbox else "production",
-        }
-        payload = remove_empty_values(payload)
-        return self.ottu.send_request(
-            path=urls.PAYMENT_METHODS,
-            method=HTTPMethod.POST,
-            json=payload,
-        )
-
-    def get_payment_methods(
-        self,
-        plugin,
-        currencies: typing.Optional[list[str]] = None,
-        customer_id: typing.Optional[str] = None,
-        operation: str = "purchase",
-        tokenizable: bool = False,
-        pg_names: typing.Optional[list[str]] = None,
-    ) -> dict:
-        return self._get_payment_methods(
-            plugin=plugin,
-            currencies=currencies,
-            customer_id=customer_id,
-            operation=operation,
-            tokenizable=tokenizable,
-            pg_names=pg_names,
-        ).as_dict()
-
     def get_pg_codes(self, plugin, currency, tokenizable=False) -> list:
         if self.payment_methods:
             return [pm.code for pm in self.payment_methods]
 
-        response = self.get_payment_methods(
+        response = self.ottu.get_payment_methods(
             plugin=plugin,
             currencies=[
                 currency,
@@ -581,7 +531,7 @@ class Session:
         # There is no way to identify the
         # cached payment method supports auto debit or not.
         # So, we are calling the API again.
-        response = self.get_payment_methods(
+        response = self.ottu.get_payment_methods(
             plugin=plugin,
             currencies=[
                 currency,

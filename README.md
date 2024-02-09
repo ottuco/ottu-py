@@ -28,20 +28,8 @@ ottu = Ottu(
 )
 ```
 
-Instead of `APIKeyAuth`, you can also use `BasicAuth` to authenticate the API calls.
+Instead of `APIKeyAuth`, you can also use other authentication methods or your own custom auth classes. For more details, see [authentication](#authentication) section.
 
-```python
-from ottu import Ottu
-from ottu.auth import BasicAuth
-
-ottu = Ottu(
-    merchant_id="merchant.id.ottu.dev",
-    auth=BasicAuth(
-        "your-username",
-        "your-password"
-    )
-)
-```
 
 Apart from these `merchant_id` and `auth`, you can also pass the `customer_id` and `is_sandbox` values. This is used
 while calling the checkout API and other situations.
@@ -576,6 +564,97 @@ urlpatterns = [
 ]
 ```
 ### Miscellaneous
+
+### Authentication
+
+The `ottu-py` supports a few authentication methods, usually suitable in most of the cases. `BasicAuth`, `APIKeyAuth`, `KeycloakPasswordAuth` and `KeycloakClientAuth` are the available authentication methods.
+* `BasicAuth` - Basic authentication, using `username` and `password`.
+   ```python
+   from ottu import Ottu
+   from ottu.auth import BasicAuth
+
+   ottu = Ottu(
+       merchant_id="merchant.id.ottu.dev",
+       auth=BasicAuth(
+           username="your-username",
+           password="your-password"
+       )
+   )
+   ```
+* `APIKeyAuth` - Authentication using API Key.
+   ```python
+   from ottu import Ottu
+   from ottu.auth import APIKeyAuth
+
+   ottu = Ottu(
+       merchant_id="merchant.id.ottu.dev",
+       auth=APIKeyAuth(
+          api_key="your-api-key"
+       )
+   )
+   ```
+* `KeycloakPasswordAuth` - Authentication using Keycloak using `password` grant type.
+   ```python
+   from ottu import Ottu
+   from ottu.auth import KeycloakPasswordAuth
+
+   ottu = Ottu(
+       merchant_id="merchant.id.ottu.dev",
+       auth=KeycloakPasswordAuth(
+            username="your-username",
+            password="your-password",
+            client_id="your-client-id",
+       )
+   )
+   ```
+  You may also need to supply `client_secret` if it is required by the Keycloak server.
+    ```python
+    from ottu import Ottu
+    from ottu.auth import KeycloakPasswordAuth
+
+    ottu = Ottu(
+        merchant_id="merchant.id.ottu.dev",
+        auth=KeycloakPasswordAuth(
+            username="your-username",
+            password="your-password",
+            client_id="your-client-id",
+            client_secret="your-client-secret"
+        )
+    )
+    ```
+* `KeycloakClientAuth` - Authentication using Keycloak using `client_credentials` grant type.
+    ```python
+    from ottu import Ottu
+    from ottu.auth import KeycloakClientAuth
+
+    ottu = Ottu(
+        merchant_id="merchant.id.ottu.dev",
+        auth=KeycloakClientAuth(
+            client_id="your-client-id",
+            client_secret="your-client-secret"
+        )
+    )
+    ```
+### Payment Methods
+You can call the `Ottu.get_payment_methods(...)` method to get the available payment methods for the given merchant.
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+)
+response = ottu.get_payment_methods(
+    plugin="payment_request",
+    currencies=["KWD", "USD"],
+    customer_id="your-customer-id",
+    operation="purchase",
+    tokenizable=False,
+    pg_names=[]
+)
+print(response)
+```
 
 ### Webhook Verification
 You can verify the webhook signature using `verify_signature(...)` function.
