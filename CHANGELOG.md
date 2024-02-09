@@ -1,6 +1,12 @@
 # Changelog
 
 
+## [1.1.0] - 2024-02-09
+
+### Added
+- New authentication classes (`KeycloakPasswordAuth` and `KeycloakClientAuth`).
+- New method `Ottu.get_payment_methods(...)` to get available payment methods.
+
 ## [1.0.0] - 2023-12-11
 
 ### Added
