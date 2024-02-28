@@ -1,5 +1,7 @@
 # Changelog
 
+## [1.1.1] - 2024-02-28
+- Updated `Django` dependency to `<4.3` to fix compatibility issues.
 
 ## [1.1.0] - 2024-02-09
 
