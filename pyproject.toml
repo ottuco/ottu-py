@@ -41,7 +41,7 @@ dependencies = [
 
 [project.optional-dependencies]
 django = [
-    "django<=4.2"
+    "django<4.3"
 ]
 all = [
     "ottu-py[django]"
