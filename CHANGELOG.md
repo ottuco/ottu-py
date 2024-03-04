@@ -1,6 +1,7 @@
 # Changelog
 
 ## [1.2.0] - TBD
+- Set default value of `operation` parameter to `None` in `Ottu.get_payment_methods(...)` method (Earlier it was `"purchase"`).
 - Removed following Django settings in favor of [`OTTU_AUTH`](/README.md#authentication-settings)
   - `OTTU_AUTH_USERNAME`
   - `OTTU_AUTH_PASSWORD`
