@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] - TBD
+- Removed following Django settings in favor of [`OTTU_AUTH`](/README.md#authentication-settings)
+  - `OTTU_AUTH_USERNAME`
+  - `OTTU_AUTH_PASSWORD`
+  - `OTTU_AUTH_API_KEY`
+
 ## [1.1.1] - 2024-02-28
 - Updated `Django` dependency to `<4.3` to fix compatibility issues.
 

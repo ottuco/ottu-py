@@ -1,19 +1,18 @@
 from django.conf import settings
 
-MERCHANT_ID = getattr(settings, "OTTU_MERCHANT_ID")
+# Merchant Related
+MERCHANT_ID: str = getattr(settings, "OTTU_MERCHANT_ID")
 
 # Authentication
-# `BasicAuth`
-AUTH_USERNAME = getattr(settings, "OTTU_AUTH_USERNAME", "")
-AUTH_PASSWORD = getattr(settings, "OTTU_AUTH_PASSWORD", "")
+AUTH: dict = getattr(settings, "OTTU_AUTH")
 
-# `APIKeyAuth`
-AUTH_API_KEY = getattr(settings, "OTTU_AUTH_API_KEY", "")
+# Abstract models
+ABSTRACT_CHECKOUT_MODEL: bool = getattr(settings, "OTTU_ABSTRACT_CHECKOUT_MODEL", False)
+ABSTRACT_WEBHOOK_MODEL: bool = getattr(settings, "OTTU_ABSTRACT_WEBHOOK_MODEL", False)
 
+# Webhook
+WEBHOOK_KEY: str = getattr(settings, "OTTU_WEBHOOK_KEY", "")
+WEBHOOK_URL: str = getattr(settings, "OTTU_WEBHOOK_URL", "")
 
-ABSTRACT_CHECKOUT_MODEL = getattr(settings, "OTTU_ABSTRACT_CHECKOUT_MODEL", False)
-ABSTRACT_WEBHOOK_MODEL = getattr(settings, "OTTU_ABSTRACT_WEBHOOK_MODEL", False)
-WEBHOOK_KEY = getattr(settings, "OTTU_WEBHOOK_KEY", "")
-WEBHOOK_URL = getattr(settings, "OTTU_WEBHOOK_URL", "")
-
-IS_SANDBOX = getattr(settings, "OTTU_IS_SANDBOX", False)
+# Misc
+IS_SANDBOX: bool = getattr(settings, "OTTU_IS_SANDBOX", False)

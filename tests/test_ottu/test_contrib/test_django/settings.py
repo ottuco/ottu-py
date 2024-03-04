@@ -34,7 +34,10 @@ USE_TZ = True
 
 # Ottu settings
 OTTU_MERCHANT_ID = "test.ottu.dev"
-OTTU_AUTH_USERNAME = "dj_username"
-OTTU_AUTH_PASSWORD = "dj_password"
+OTTU_AUTH = {
+    "class": "ottu.auth.BasicAuth",
+    "username": "dj_username",
+    "password": "dj_password",
+}
 OTTU_WEBHOOK_URL = "https://test.client.dev/webhook-receiver/"
 OTTU_WEBHOOK_KEY = "pu9MpX3yPR"

@@ -1,8 +1,43 @@
 import pytest
+from django.core.exceptions import ImproperlyConfigured
 
+from ottu.auth import BasicAuth
+from ottu.contrib.django.core.ottu import _generate_instance
 from ottu.contrib.django.models import Checkout
 
 pytestmark = pytest.mark.django_db
+
+
+class TestDefaultOttuInit:
+    mock_path = "ottu.contrib.django.core.ottu.conf.AUTH"
+
+    def test_invalid_cls_path(self, mocker):
+        mock_auth = mocker.patch(self.mock_path)
+        mock_auth.copy.return_value = {"class": "path.to.invalid.AuthClass"}
+        with pytest.raises(ImproperlyConfigured) as exc_info:
+            _generate_instance()
+        assert "The 'class' key is not a valid import path" == str(exc_info.value)
+
+    def test_without_cls_field(self, mocker):
+        mock_auth = mocker.patch(self.mock_path)
+        mock_auth.copy.return_value = {}
+        with pytest.raises(ImproperlyConfigured) as exc_info:
+            _generate_instance()
+        assert "The 'class' key is required in the 'AUTH' dictionary" == str(
+            exc_info.value,
+        )
+
+    def test_without_auth_settings(self, mocker):
+        mock_auth = mocker.patch(self.mock_path)
+        mock_auth.copy.side_effect = AttributeError
+
+        with pytest.raises(ImproperlyConfigured) as exc_info:
+            _generate_instance()
+        assert "Must set `OTTU_AUTH` in the settings file" == str(exc_info.value)
+
+    def test_generate_instance(self):
+        ottu = _generate_instance()
+        assert isinstance(ottu.auth, BasicAuth)
 
 
 class TestOttuAuth:
