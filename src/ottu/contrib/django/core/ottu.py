@@ -1,4 +1,6 @@
-from ....auth import APIKeyAuth, BasicAuth
+from django.core.exceptions import ImproperlyConfigured
+from django.utils.module_loading import import_string
+
 from ....ottu import Ottu as _Ottu
 from .. import conf
 from ..models import Checkout
@@ -26,14 +28,25 @@ class Ottu(_Ottu):
         self._create_or_update_dj_session()
 
 
-basic_auth = BasicAuth(username=conf.AUTH_USERNAME, password=conf.AUTH_PASSWORD)
-api_key_auth = APIKeyAuth(api_key=conf.AUTH_API_KEY)
-
-
 def _generate_instance():
+    try:
+        auth_conf = conf.AUTH.copy()
+        auth_cls = import_string(auth_conf["class"])
+    except AttributeError:
+        raise ImproperlyConfigured(
+            "Must set `OTTU_AUTH` in the settings file",
+        )
+    except KeyError:
+        raise ImproperlyConfigured(
+            "The 'class' key is required in the 'AUTH' dictionary",
+        )
+    except ImportError:
+        raise ImproperlyConfigured("The 'class' key is not a valid import path")
+    auth_conf.pop("class")
+    auth_instance = auth_cls(**auth_conf)
     return Ottu(
         merchant_id=conf.MERCHANT_ID,
-        auth=basic_auth or api_key_auth,
+        auth=auth_instance,
         is_sandbox=conf.IS_SANDBOX,
     )
 

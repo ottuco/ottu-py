@@ -484,12 +484,27 @@ Set values for the following settings variables.
 
 #### Authentication Settings
 
-1. **Basic Authentication**
-    * `OTTU_AUTH_USERNAME` - Username (example: `username`)
-    * `OTTU_AUTH_PASSWORD` - Password (example: `my-secret-password`)
-2. **API Key Authentication**
-    * `OTTU_AUTH_API_KEY` - API Key (example: `my-secret-api-key`)
+`OTTU_AUTH` - The variable `OTTU_AUTH` is a dictionary that represents the authentication settings. It should contain mandatory field named `class` which represents the _dotted path_ to the authentication class.
+`OTTU_AUTH` can also contain other fields that are required by the authentication class.
 
+```python
+# settings.py
+
+OTTU_AUTH = {
+    "class": "ottu.auth.BasicAuth",
+    "username": "dj_username",
+    "password": "dj_password",
+}
+```
+OR
+```python
+# settings.py
+
+OTTU_AUTH = {
+    "class": "ottu.auth.APIKeyAuth",
+    "api_key": "my-api-key",
+}
+```
 #### Other Settings
 
 * `OTTU_MERCHANT_ID` - Merchant ID (example: `merchant.id.ottu.dev`)
