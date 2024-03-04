@@ -304,7 +304,7 @@ class Ottu:
         plugin,
         currencies: typing.Optional[list[str]] = None,
         customer_id: typing.Optional[str] = None,
-        operation: str = "purchase",
+        operation: typing.Optional[str] = None,
         tokenizable: bool = False,
         pg_names: typing.Optional[list[str]] = None,
     ) -> dict:
@@ -322,7 +322,7 @@ class Ottu:
         plugin,
         currencies: typing.Optional[list[str]] = None,
         customer_id: typing.Optional[str] = None,
-        operation: str = "purchase",
+        operation: typing.Optional[str] = None,
         tokenizable: bool = False,
         pg_names: typing.Optional[list[str]] = None,
     ) -> OttuPYResponse:
