@@ -3,7 +3,6 @@ from inspect import signature
 import pytest
 
 from ottu import Ottu
-from ottu.enums import TxnType
 from ottu.errors import ValidationError
 from ottu.session import Session
 

@@ -127,11 +127,6 @@ class Session:
             {field: getattr(self, field, "") for field in fields},
         )
 
-    # def __validate_customer_id(self, customer_id: typing.Optional[str] = None) -> None:
-    #     if self.customer_id or customer_id:
-    #         return
-    #     raise ValidationError("`customer_id` is required")
-
     def __path_to_file(self, path: str) -> typing.Tuple[str, bytes]:
         with open(path, "rb") as f:
             content = f.read()
