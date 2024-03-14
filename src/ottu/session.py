@@ -127,10 +127,10 @@ class Session:
             {field: getattr(self, field, "") for field in fields},
         )
 
-    def __validate_customer_id(self, customer_id: typing.Optional[str] = None) -> None:
-        if self.customer_id or customer_id:
-            return
-        raise ValidationError("`customer_id` is required")
+    # def __validate_customer_id(self, customer_id: typing.Optional[str] = None) -> None:
+    #     if self.customer_id or customer_id:
+    #         return
+    #     raise ValidationError("`customer_id` is required")
 
     def __path_to_file(self, path: str) -> typing.Tuple[str, bytes]:
         with open(path, "rb") as f:
@@ -204,7 +204,6 @@ class Session:
         :param webhook_url: Webhook URL
         :return: Session
         """
-        self.__validate_customer_id(customer_id)
         customer_id = customer_id or self.ottu.customer_id
         payload = {
             "type": txn_type.value,
@@ -317,7 +316,6 @@ class Session:
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
     ) -> dict:
-        self.__validate_customer_id(customer_id)
         payload = {
             "amount": amount,
             "currency_code": currency_code,
