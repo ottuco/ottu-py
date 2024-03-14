@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.0] - 2024-03-14
+- Remove irrelevant `customer_id` check from checkout API
+- Loosen `httpx` dependency (now supports `httpx>=0.25.0`)
+
 ## [1.2.0] - 2024-03-04
 - Set default value of `operation` parameter to `None` in `Ottu.get_payment_methods(...)` method (Earlier it was `"purchase"`).
 - Removed following Django settings in favor of [`OTTU_AUTH`](/README.md#authentication-settings)
