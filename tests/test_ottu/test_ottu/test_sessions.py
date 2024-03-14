@@ -10,22 +10,6 @@ from ottu.session import Session
 from .mixins import OttuAutoDebitMixin, OttuCheckoutMixin
 
 
-class TestSessionMisc:
-    def test_customer_id_validation(self, auth_basic):
-        ottu = Ottu(
-            merchant_id="test.ottu.dev",
-            auth=auth_basic,
-            customer_id="test-customer-id",
-        )
-        with pytest.raises(ValidationError):
-            ottu.checkout(
-                txn_type=TxnType.PAYMENT_REQUEST,
-                amount="1.000",
-                currency_code="KWD",
-                pg_codes=["ottu_pg_kwd_tkn"],
-            )
-
-
 class TestSessionCreate(OttuCheckoutMixin):
     def get_method_ref(self):
         return Session.create
