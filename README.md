@@ -125,6 +125,36 @@ response = ottu.session.create(
 )
 print(response)
 ```
+#### Checkout API with dynamic argument(s)
+
+Developers can pass any number of dynamic arguments to the `checkout(...)` method. The dynamic arguments will be passed to the API as it is.
+
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+from ottu.enums import TxnType
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+    customer_id="your-customer-id"
+)
+response = ottu.checkout(
+    txn_type=TxnType.PAYMENT_REQUEST,
+    amount="20.23",
+    currency_code="KWD",
+    pg_codes=["mpgs", "ottu_pg"],
+    customer_phone="+96550000000",
+    order_no="1234567890",
+
+    extra_name="John", # dynamic argument 1
+    extra_age="25", # dynamic argument 2
+    extra_country="Kuwait", # dynamic argument 3
+)
+print(response)
+```
+Here, `extra_name`, `extra_age`, and `extra_country` are the dynamic arguments which are not supported by the SDK, but may be supported by the API.
+```python
 
 ### Session Retrieve
 

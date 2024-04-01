@@ -16,6 +16,38 @@ class TestSessionCreate(OttuCheckoutMixin):
     def get_method(self, instance: Ottu):
         return instance.session.create
 
+    def test_checkout_with_dynamic_args(
+        self,
+        httpx_mock,
+        auth_api_key,
+        payload_minimal_checkout,
+        response_checkout,
+    ):
+        """
+        Test the `Ottu.checkout` method with dynamic parameters.
+        """
+        match_json = {
+            "type": "payment_request",
+            "currency_code": "KWD",
+            "amount": "12.34",
+            "pg_codes": [
+                "KNET",
+            ],
+            "payment_type": "one_off",
+            "customer_id": "test-customer-jpg",
+            "extra_name": "John",
+            "extra_age": 18,
+        }
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/checkout/v1/pymt-txn/",
+            method="POST",
+            status_code=200,
+            match_json=match_json,
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        # Make the request
+        ottu.checkout(extra_name="John", extra_age=18, **payload_minimal_checkout)
+
 
 class TestSessionRetrieve:
     def test_retrieve_missing_session_id(
