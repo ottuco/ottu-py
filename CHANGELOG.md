@@ -1,6 +1,9 @@
 # Changelog
 
 ## [1.4.0] - 2024-04-02
+- Added option to send dynamic parameters to session update (`Session.update(...)`)
+
+## [1.4.0] - 2024-04-02
 - Added option to send dynamic parameters to the Checkout API. The affected methods are:
   - `Ottu.checkout(...)`
   - `Ottu.checkout_autoflow(...)` (via `checkout_extra_args` parameter)
