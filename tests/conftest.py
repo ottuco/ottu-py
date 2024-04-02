@@ -133,6 +133,8 @@ def signature_info_auto_debit_autoflow():
         "token",
         "vendor_name",
         "webhook_url",
+        "include_sdk_setup_preload",
+        "checkout_extra_args",
     }
     return {
         "required_fields": required_fields,
@@ -170,6 +172,8 @@ def signature_info_checkout_auto_flow():
         "customer_id",
         "billing_address",
         "customer_last_name",
+        "checkout_extra_args",
+        "include_sdk_setup_preload",
     }
     return {
         "required_fields": required_fields,

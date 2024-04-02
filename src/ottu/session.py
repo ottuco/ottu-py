@@ -138,6 +138,7 @@ class Session:
 
     def create(
         self,
+        *,
         txn_type: TxnType,
         amount: str,
         currency_code: str,
@@ -300,6 +301,7 @@ class Session:
 
     def update(
         self,
+        *,
         amount: typing.Optional[str] = None,
         currency_code: typing.Optional[str] = None,
         pg_codes: typing.Optional[list[str]] = None,
@@ -557,6 +559,7 @@ class Session:
     @interruption_handler
     def checkout_autoflow(
         self,
+        *,
         txn_type: TxnType,
         amount: str,
         currency_code: str,
@@ -586,6 +589,7 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        include_sdk_setup_preload: typing.Optional[bool] = None,
         checkout_extra_args: typing.Optional[dict] = None,
     ):
         pg_codes = self.get_pg_codes(plugin=txn_type, currency=currency_code)
@@ -621,12 +625,14 @@ class Session:
             shortify_checkout_url=shortify_checkout_url,
             vendor_name=vendor_name,
             webhook_url=webhook_url,
+            include_sdk_setup_preload=include_sdk_setup_preload,
             **checkout_extra_args,
         )
 
     @interruption_handler
     def auto_debit_autoflow(
         self,
+        *,
         txn_type: TxnType,
         amount: str,
         currency_code: str,
@@ -656,12 +662,15 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        include_sdk_setup_preload: typing.Optional[bool] = None,
+        checkout_extra_args: typing.Optional[dict] = None,
         token: typing.Optional[str] = None,
     ):
         """
         Completes the auto debit flow by automatically
         identifying the "latest" payment method and the token.
         """
+        checkout_extra_args = checkout_extra_args or {}
         if not token:
             token = self.get_token_from_db(agreement=agreement, customer_id=customer_id)
         if not pg_codes:
@@ -700,6 +709,8 @@ class Session:
             shortify_checkout_url=shortify_checkout_url,
             vendor_name=vendor_name,
             webhook_url=webhook_url,
+            include_sdk_setup_preload=include_sdk_setup_preload,
+            **checkout_extra_args,
         )
         if not checkout_response["success"]:
             raise APIInterruptError(**checkout_response)
