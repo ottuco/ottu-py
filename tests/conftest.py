@@ -303,6 +303,7 @@ def signature_info_session_update():
         "shortify_checkout_url",
         "vendor_name",
         "webhook_url",
+        "kwargs",
     }
     return {
         "required_fields": required_fields,

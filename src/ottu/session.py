@@ -328,6 +328,7 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        **kwargs,
     ) -> dict:
         payload = {
             "amount": amount,
@@ -357,6 +358,7 @@ class Session:
             "webhook_url": webhook_url,
         }
         payload = remove_empty_values(payload)
+        payload.update(kwargs)  # `kwargs` may contain `None` values
         if attachment:
             json_or_form = {
                 "data": payload,
