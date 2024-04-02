@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.4.0] - 2024-04-02
+- Added option to send dynamic parameters to the Checkout API. The affected methods are:
+  - `Ottu.checkout(...)`
+  - `Ottu.checkout_autoflow(...)` (via `checkout_extra_args` parameter)
+  - `Ottu.auto_debit_autoflow(...)` (via `checkout_extra_args` parameter)
+- A new parameter `include_sdk_setup_preload` added new parameter to the Checkout API
+- Removed positional arguments from following methods:
+  - `Ottu.checkout(...)`
+  - `Ottu.Session.update(...)`
+  - `Ottu.checkout_autoflow(...)`
+  - `Ottu.auto_debit_autoflow(...)`
+
 ## [1.3.0] - 2024-03-14
 - Remove irrelevant `customer_id` check from checkout API
 - Loosen `httpx` dependency (now supports `httpx>=0.25.0`)
