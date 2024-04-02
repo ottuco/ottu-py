@@ -229,6 +229,7 @@ def signature_info_checkout():
         "amount",
         "currency_code",
         "pg_codes",
+        "kwargs",
     }
     optional_fields = {
         "payment_type",

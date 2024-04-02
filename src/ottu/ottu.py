@@ -95,6 +95,7 @@ class Ottu:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        **kwargs,
     ) -> dict:
         """
         a proxy method to `Session.create(...)`
@@ -130,6 +131,7 @@ class Ottu:
             shortify_checkout_url=shortify_checkout_url,
             vendor_name=vendor_name,
             webhook_url=webhook_url,
+            **kwargs,
         )
 
     def auto_debit(

@@ -1,3 +1,4 @@
+import logging
 import typing
 from dataclasses import dataclass
 
@@ -10,6 +11,8 @@ from .utils import remove_empty_values
 
 if typing.TYPE_CHECKING:
     from .ottu import Ottu
+
+logger = logging.getLogger("ottu-py")
 
 
 @dataclass
@@ -165,6 +168,7 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        **kwargs,
     ) -> dict:
         """
         Creates a new checkout session.
@@ -197,8 +201,16 @@ class Session:
         :param shortify_checkout_url: Shortify checkout URL
         :param vendor_name: Vendor name
         :param webhook_url: Webhook URL
+        :param kwargs: Additional arguments supported by the API
         :return: Session
         """
+        if kwargs:
+            msg = (
+                f"The following arguments are not "
+                f"supported by the SDK: {', '.join(kwargs.keys())}"
+            )
+            logger.warning(msg)
+
         customer_id = customer_id or self.ottu.customer_id
         payload = {
             "type": txn_type.value,
@@ -232,6 +244,7 @@ class Session:
             "webhook_url": webhook_url,
         }
         payload = remove_empty_values(payload)
+        payload.update(kwargs)  # `kwargs` may contain `None` values
         if attachment:
             json_or_form = {
                 "data": payload,
@@ -570,8 +583,10 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        checkout_extra_args: typing.Optional[dict] = None,
     ):
         pg_codes = self.get_pg_codes(plugin=txn_type, currency=currency_code)
+        checkout_extra_args = checkout_extra_args or {}
         return self.create(
             txn_type=txn_type,
             amount=amount,
@@ -603,6 +618,7 @@ class Session:
             shortify_checkout_url=shortify_checkout_url,
             vendor_name=vendor_name,
             webhook_url=webhook_url,
+            **checkout_extra_args,
         )
 
     @interruption_handler
