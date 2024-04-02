@@ -95,6 +95,7 @@ class Ottu:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        include_sdk_setup_preload: typing.Optional[bool] = None,
         **kwargs,
     ) -> dict:
         """
@@ -131,6 +132,7 @@ class Ottu:
             shortify_checkout_url=shortify_checkout_url,
             vendor_name=vendor_name,
             webhook_url=webhook_url,
+            include_sdk_setup_preload=include_sdk_setup_preload,
             **kwargs,
         )
 

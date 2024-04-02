@@ -258,6 +258,7 @@ def signature_info_checkout():
         "shortify_checkout_url",
         "vendor_name",
         "webhook_url",
+        "include_sdk_setup_preload",
     }
     return {
         "required_fields": required_fields,
