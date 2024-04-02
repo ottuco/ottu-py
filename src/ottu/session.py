@@ -168,6 +168,7 @@ class Session:
         shortify_checkout_url: typing.Optional[bool] = None,
         vendor_name: typing.Optional[str] = None,
         webhook_url: typing.Optional[str] = None,
+        include_sdk_setup_preload: typing.Optional[bool] = None,
         **kwargs,
     ) -> dict:
         """
@@ -201,6 +202,7 @@ class Session:
         :param shortify_checkout_url: Shortify checkout URL
         :param vendor_name: Vendor name
         :param webhook_url: Webhook URL
+        :param include_sdk_setup_preload: Include SDK setup preload
         :param kwargs: Additional arguments supported by the API
         :return: Session
         """
@@ -242,6 +244,7 @@ class Session:
             "shortify_checkout_url": shortify_checkout_url,
             "vendor_name": vendor_name,
             "webhook_url": webhook_url,
+            "include_sdk_setup_preload": include_sdk_setup_preload,
         }
         payload = remove_empty_values(payload)
         payload.update(kwargs)  # `kwargs` may contain `None` values
