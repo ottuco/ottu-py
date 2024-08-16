@@ -1,5 +1,8 @@
 # Changelog
 
+## [Dev]
+- Added option to set `timeout` on all requests made by the SDK.
+
 ## [1.4.0] - 2024-04-02
 - Added option to send dynamic parameters to session update (`Session.update(...)`)
 

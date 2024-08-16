@@ -68,3 +68,61 @@ class TestRequest:
             "success": False,
         }
         assert response.as_dict() == expected_response
+
+    def test_default_timeout(self, httpx_mock, auth_api_key):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/any/path",
+            method="GET",
+            status_code=200,
+            json={"message": "success"},
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        ottu.send_request(path="/any/path", method="GET")
+        request = httpx_mock.get_request()
+        timeout = request.extensions.get("timeout", {})
+        assert timeout == {"connect": 30, "pool": 30, "read": 30, "write": 30}
+
+    def test_dynamic_timeout_via_constructor(self, httpx_mock, auth_api_key):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/any/path",
+            method="GET",
+            status_code=200,
+            json={"message": "success"},
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key, timeout=23)
+        ottu.send_request(path="/any/path", method="GET")
+        request = httpx_mock.get_request()
+        timeout = request.extensions.get("timeout", {})
+        assert timeout == {"connect": 23, "pool": 23, "read": 23, "write": 23}
+
+    def test_dynamic_timeout_via_cls_var(self, httpx_mock, auth_api_key):
+        class CustomOttu(Ottu):
+            default_timeout = 12
+
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/any/path",
+            method="GET",
+            status_code=200,
+            json={"message": "success"},
+        )
+        ottu = CustomOttu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        ottu.send_request(path="/any/path", method="GET")
+        request = httpx_mock.get_request()
+        timeout = request.extensions.get("timeout", {})
+        assert timeout == {"connect": 12, "pool": 12, "read": 12, "write": 12}
+
+    def test_timeout_all_in_one(self, httpx_mock, auth_api_key):
+        class CustomOttu(Ottu):
+            default_timeout = 12
+
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/any/path",
+            method="GET",
+            status_code=200,
+            json={"message": "success"},
+        )
+        ottu = CustomOttu(merchant_id="test.ottu.dev", auth=auth_api_key, timeout=22)
+        ottu.send_request(path="/any/path", method="GET")
+        request = httpx_mock.get_request()
+        timeout = request.extensions.get("timeout", {})
+        assert timeout == {"connect": 22, "pool": 22, "read": 22, "write": 22}
