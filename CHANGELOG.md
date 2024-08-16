@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Dev]
+
+## [1.5.0] - 2024-08-16
 - Added option to set `timeout` on all requests made by the SDK.
 
 ## [1.4.0] - 2024-04-02
