@@ -116,6 +116,6 @@ class RequestResponseHandler:
         else:
             logger.error(
                 f"Received {response.status_code} response "
-                f"from {self.url} with args {self.kwargs}",
+                f"from {self.url} with args {self.kwargs}. Error: {response.error}",
             )
         return response
