@@ -755,6 +755,38 @@ In most of the cases, the `error` will be a JSON object with a key of `detail` a
    }
 }
 ```
+### Timeout
+
+You can set the `timeout` value for all requests made by the SDK. The default value is `30` seconds.
+
+**Method 1** - Set the timeout value while initializing the `Ottu` object.
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+    timeout=60 # Set the timeout to 60 seconds
+)
+```
+
+**Method 2** - Set the timeout value using the `timeout` property.
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+
+class MyOttu(Ottu):
+  default_timeout = 50 # Set the default timeout to 50 seconds
+
+ottu = MyOttu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+)
+```
+
+**Note:** The timeout value set using the `timeout` parameter will override the value set by the `default_timeout` attribute.
+
 
 ## Test
 

@@ -14,6 +14,7 @@ from .utils import remove_empty_values
 class Ottu:
     _session: typing.Optional[Session] = None
     _card: typing.Optional[Card] = None
+    default_timeout: int = 30
     session_cls: typing.Type[Session] = Session
     request_response_handler: typing.Type[
         RequestResponseHandler
@@ -25,6 +26,7 @@ class Ottu:
         auth: Auth,
         customer_id: typing.Optional[str] = None,
         is_sandbox: bool = True,
+        timeout: typing.Optional[int] = None,
     ) -> None:
         self.merchant_id = merchant_id
         self.host_url = f"https://{merchant_id}"
@@ -32,6 +34,7 @@ class Ottu:
         self.customer_id = customer_id
         self.is_sandbox = is_sandbox
         self.env_type = "sandbox" if is_sandbox else "production"
+        self.timeout = timeout or self.default_timeout
 
         # Other initializations
         self.request_session = self.__create_session()
@@ -49,6 +52,7 @@ class Ottu:
             session=self.request_session,
             method=method,
             url=f"{self.host_url}{path}",
+            timeout=self.timeout,
             **request_params,
         ).process()
 
