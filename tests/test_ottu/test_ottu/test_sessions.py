@@ -48,6 +48,30 @@ class TestSessionCreate(OttuCheckoutMixin):
         # Make the request
         ottu.checkout(extra_name="John", extra_age=18, **payload_minimal_checkout)
 
+    def test_session_create_dynamic_response_fields(
+        self,
+        httpx_mock,
+        auth_api_key,
+        payload_minimal_checkout,
+        response_checkout,
+    ):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/checkout/v1/pymt-txn/",
+            method="POST",
+            status_code=200,
+            json=response_checkout,
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        # Make the request
+        response = ottu.checkout(
+            extra_name="John",
+            extra_age=18,
+            **payload_minimal_checkout,
+        )
+        # Assert the responses
+        assert "random_field_1" in response["response"]
+        assert "random_field_2" in response["response"]
+
 
 class TestSessionRetrieve:
     def test_retrieve_missing_session_id(
@@ -100,6 +124,32 @@ class TestSessionRetrieve:
         }
         assert response == expected_response
         assert ottu.session.session_id == session_id
+
+    def test_retrieve_with_dynamic_fields(
+        self,
+        auth_api_key,
+        httpx_mock,
+        response_checkout,
+    ):
+        session_id = "10039bbdadb8ef80dd9e16e200c241b139684a8d"
+        httpx_mock.add_response(
+            url=f"https://test.ottu.dev/b/checkout/v1/pymt-txn/{session_id}",
+            method="GET",
+            status_code=200,
+            json=response_checkout,
+        )
+
+        # Initiate Ottu
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+
+        # Make sure the `ottu.session` is not set
+        assert ottu.session.session_id is None
+
+        # Call the `Ottu.session.retrieve()` method
+        response = ottu.session.retrieve(session_id=session_id)
+        # Assert the responses
+        assert "random_field_1" in response["response"]
+        assert "random_field_2" in response["response"]
 
     def test_retrieve_error(
         self,

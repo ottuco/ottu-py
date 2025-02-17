@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.views.generic.base import ContextMixin, View
 
 from ...errors import WebhookProcessingError
-from ...utils import verify_signature
+from ...utils.webhooks import verify_signature
 from . import conf
 from .models import Webhook
 

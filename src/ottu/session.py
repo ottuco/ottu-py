@@ -1,13 +1,13 @@
 import logging
 import typing
-from dataclasses import dataclass
 
 from .decorators import interruption_handler
 from .enums import HTTPMethod, TxnType
 from .errors import APIInterruptError, ValidationError
 from .mixins import AsDictMixin
 from .request import OttuPYResponse
-from .utils import remove_empty_values
+from .utils.dataclasses import dynamic_dataclass
+from .utils.helpers import remove_empty_values
 
 if typing.TYPE_CHECKING:
     from .ottu import Ottu
@@ -15,7 +15,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger("ottu-py")
 
 
-@dataclass
+@dynamic_dataclass
 class PaymentMethod(AsDictMixin):
     code: typing.Optional[str] = None
     name: typing.Optional[str] = None

@@ -11,6 +11,8 @@ response_checkout = {
     "operation": "purchase",
     "payment_methods": [
         {
+            "random_field_1": "Support Random Field 1.",
+            "random_field_2": "Support Random Field 2.",
             "code": "ottu_pg_kwd_tkn",
             "name": "ottu_pg_kwd_tkn",
             "pg": "Ottu PG",
@@ -31,6 +33,8 @@ response_checkout = {
     "session_id": "10039bbdadb8ef80dd9e16e200c241b139684a8d",
     "state": "created",
     "type": "payment_request",
+    "random_field_1": "Support Random Field 1.",
+    "random_field_2": "Support Random Field 2.",
 }
 response_auto_debit = {
     "agreement": {
@@ -66,14 +70,20 @@ response_auto_debit = {
     "session_id": "c0b425064e112735130914cb76eff8ce14ca8393",
     "signature": "63cfe04f3e20b337156cd33ca27f4c573ad743f7f96d8df9b61c202cb8c7fb93",
     "state": "paid",
+    "random_field_1": "Support Random Field 1.",
+    "random_field_2": "Support Random Field 2.",
 }
 response_payment_methods = {
+    "random_field_1": "Support Random Field 1.",
+    "random_field_2": "Support Random Field 2.",
     "customer_payment_methods": [
         "auto-debit",
         "ottu_pg_kwd_tkn",
     ],
     "payment_methods": [
         {
+            "random_field_1": "Support Random Field 1.",
+            "random_field_2": "Support Random Field 2.",
             "code": "ottu_pg_kwd_tkn",
             "name": "ottu_pg_kwd_tkn",
             "pg": "Ottu PG",
@@ -95,6 +105,8 @@ response_payment_methods = {
 }
 response_user_cards = [
     {
+        "random_field_1": "Support Random Field 1.",
+        "random_field_2": "Support Random Field 2.",
         "customer_id": "test-customer-jpg",
         "brand": "VISA",
         "name_on_card": "ASDFFFF",
@@ -119,4 +131,6 @@ webhook_payload = {
     "currency_code": "KWD",
     "customer_first_name": "example-customer",
     "signature": "6143b8ad4bd283540721ab000f6de746e722231aaaa90bc38f639081d3ff9f67",
+    "random_field_1": "Support Random Field 1.",
+    "random_field_2": "Support Random Field 2.",
 }

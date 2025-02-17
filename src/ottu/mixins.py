@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from .utils.dataclasses import dynamic_asdict
 
 
 class ResponseMixin:
@@ -28,4 +28,4 @@ class ResponseMixin:
 
 class AsDictMixin:
     def as_dict(self) -> dict:
-        return asdict(self)  # type: ignore
+        return dynamic_asdict(self)  # type: ignore

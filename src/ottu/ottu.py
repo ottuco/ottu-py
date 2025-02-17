@@ -8,7 +8,7 @@ from .cards import Card
 from .enums import HTTPMethod, TxnType
 from .request import OttuPYResponse, RequestResponseHandler
 from .session import Session
-from .utils import remove_empty_values
+from .utils.helpers import remove_empty_values
 
 
 class Ottu:
