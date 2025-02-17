@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Dev]
+- Fixed `PaymentMethod.__init__() got an unexpected keyword argument 'icons'` error.
 
 ## [1.5.0] - 2024-08-16
 - Added option to set `timeout` on all requests made by the SDK.
