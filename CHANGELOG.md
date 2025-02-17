@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Dev]
+
+## [1.5.1] - 2025-02-17
 - Fixed `PaymentMethod.__init__() got an unexpected keyword argument 'icons'` error.
 
 ## [1.5.0] - 2024-08-16
