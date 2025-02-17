@@ -7,7 +7,7 @@ from .enums import HTTPMethod, TxnType
 from .errors import APIInterruptError, ValidationError
 from .mixins import AsDictMixin
 from .request import OttuPYResponse
-from .utils import remove_empty_values
+from .utils.helpers import remove_empty_values
 
 if typing.TYPE_CHECKING:
     from .ottu import Ottu
