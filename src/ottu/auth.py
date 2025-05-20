@@ -26,16 +26,36 @@ class BasicAuth(_BasicAuth):
         return len(self._auth_header) > 7
 
 
-class APIKeyAuth(Auth):
-    def __init__(self, api_key: str):
-        self.api_key = api_key
+class BasicAuthorizationHeaderAuth(Auth):
+    """
+    Basic authentication using `Authorization` header.
+    """
+
+    def __init__(self, header: str):
+        self.header = header
 
     def auth_flow(self, request: Request):
-        request.headers["Authorization"] = f"Api-Key {self.api_key}"
+        request.headers["Authorization"] = self.header
         yield request
 
     def __bool__(self):
-        return bool(self.api_key)
+        return bool(self.header)
+
+
+class TokenAuth(BasicAuthorizationHeaderAuth):
+    def __init__(self, token: str, prefix: str = "Bearer"):
+        self.prefix = prefix
+        self.token = token
+        header = f"{self.prefix} {self.token}".strip()
+        super().__init__(header=header)
+
+    def __bool__(self):
+        return bool(self.token)
+
+
+class APIKeyAuth(TokenAuth):
+    def __init__(self, api_key: str, prefix: str = "Api-Key"):
+        super().__init__(token=api_key, prefix=prefix)
 
 
 class KeycloakAuthBase:

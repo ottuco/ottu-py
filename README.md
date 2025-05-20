@@ -626,7 +626,34 @@ The `ottu-py` supports a few authentication methods, usually suitable in most of
        )
    )
    ```
-* `APIKeyAuth` - Authentication using API Key.
+* `BasicAuthorizationHeaderAuth` - Basic auth setup for header based authentication. You can pass the entire`Authorization` header value into the constructor.
+  ```python
+  from ottu import Ottu
+  from ottu.auth import BasicAuthorizationHeaderAuth
+
+  token = "Your-Token-Here"
+  ottu = Ottu(
+      merchant_id="merchant.id.ottu.dev",
+      auth=BasicAuthorizationHeaderAuth(
+          header=f"Token {token}"
+      )
+  )
+  ```
+* `TokenAuth` - Same as `BasicAuthorizationHeaderAuth`, but, the constructor accepts the token and prefix as separate arguments. This is useful when you want to use a different prefix than `Token`.
+  ```python
+  from ottu import Ottu
+  from ottu.auth import TokenAuth
+
+  token = "Your-Token-Here"
+  ottu = Ottu(
+      merchant_id="merchant.id.ottu.dev",
+      auth=TokenAuth(
+          token=token,
+          prefix="Token",
+      )
+  )
+  ```
+* `APIKeyAuth` - Authentication using API Key. This is also same as `TokenAuth` but, constructor accepts the `api_key` instead of `token`.
    ```python
    from ottu import Ottu
    from ottu.auth import APIKeyAuth

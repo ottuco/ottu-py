@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Dev]
+- Added new auth classes for more generic usage (`BasicAuthorizationHeaderAuth` and `TokenAuth`).
 
 ## [1.5.1] - 2025-02-17
 - Fixed `PaymentMethod.__init__() got an unexpected keyword argument 'icons'` error.
