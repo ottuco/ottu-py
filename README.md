@@ -732,7 +732,7 @@ print(response)
 You can verify the webhook signature using `verify_signature(...)` function.
 
 ```python
-from ottu.utils import verify_signature
+from ottu.utils.webhooks import verify_signature
 
 webhook_data_received = {
    "amount":"86.000",
