@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Dev]
+
+## [1.6.0] - 2025-05-20
 - Remove `X-Service-ID` from `KeycloakPasswordAuth`.
 - Added new auth classes for more generic usage (`BasicAuthorizationHeaderAuth` and `TokenAuth`).
 
