@@ -1,10 +1,14 @@
 from django.core.cache import cache
 
-from ottu.auth import KeycloakClientAuth, KeycloakPasswordAuth
+from ottu.auth import BasicAuth, KeycloakClientAuth, KeycloakPasswordAuth
 from ottu.ottu import Ottu
 
 
 class KCAuthTestMixin:
+    __test__ = False
+    auth: BasicAuth
+    match_headers: dict
+
     def teardown_method(self):
         cache.clear()
 
@@ -14,10 +18,7 @@ class KCAuthTestMixin:
             method="GET",
             status_code=200,
             json={},
-            match_headers={
-                "Authorization": "Bearer 5223400d-8214-461c-ad6e-74af7bdf8061",
-                "X-Service-ID": "test-realm",
-            },
+            match_headers=self.match_headers,
         )
         httpx_mock.add_response(
             url=(
@@ -46,6 +47,11 @@ class TestKeycloakPasswordAuth1(KCAuthTestMixin):
     `auth` doesn't have `client_secret` attribute
     """
 
+    __test__ = True
+    match_headers = {
+        "Authorization": "Bearer 5223400d-8214-461c-ad6e-74af7bdf8061",
+    }
+
     auth = KeycloakPasswordAuth(
         username="username",
         password="password",
@@ -61,6 +67,11 @@ class TestKeycloakPasswordAuth2(KCAuthTestMixin):
     `auth` has `client_secret` attribute
     """
 
+    __test__ = True
+    match_headers = {
+        "Authorization": "Bearer 5223400d-8214-461c-ad6e-74af7bdf8061",
+    }
+
     auth = KeycloakPasswordAuth(
         username="username",
         password="password",
@@ -73,6 +84,11 @@ class TestKeycloakPasswordAuth2(KCAuthTestMixin):
 
 
 class TestKeycloakClientAuth(KCAuthTestMixin):
+    __test__ = True
+    match_headers = {
+        "Authorization": "Bearer 5223400d-8214-461c-ad6e-74af7bdf8061",
+        "X-Service-ID": "test-realm",
+    }
     auth = KeycloakClientAuth(
         client_id="backend",
         client_secret="8b603c51-5342-4ad6-b9e0-c9d4893a13d4",

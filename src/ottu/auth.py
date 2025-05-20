@@ -125,7 +125,6 @@ class KeycloakAuthBase:
     def auth_flow(self, request: Request):
         access_token = self.get_token()
         request.headers["Authorization"] = f"Bearer {access_token}"
-        request.headers["X-Service-ID"] = self.realm
         yield request
 
 
@@ -170,3 +169,7 @@ class KeycloakClientAuth(KeycloakAuthBase, Auth):
         payload["client_id"] = self.client_id
         payload["client_secret"] = self.client_secret
         return payload
+
+    def auth_flow(self, request: Request):
+        request.headers["X-Service-ID"] = self.realm
+        yield from super().auth_flow(request)
