@@ -1,6 +1,13 @@
 import pytest
 
-from ottu.auth import APIKeyAuth, BasicAuth, KeycloakClientAuth, KeycloakPasswordAuth
+from ottu.auth import (
+    APIKeyAuth,
+    BasicAuth,
+    BasicAuthorizationHeaderAuth,
+    KeycloakClientAuth,
+    KeycloakPasswordAuth,
+    TokenAuth,
+)
 from ottu.ottu import Ottu
 
 
@@ -12,6 +19,15 @@ from ottu.ottu import Ottu
             "Basic dXNlcm5hbWU6cGFzc3dvcmQ=",
         ),
         (APIKeyAuth(api_key="U6cGFzc3dvcmQ"), "Api-Key U6cGFzc3dvcmQ"),
+        (APIKeyAuth(api_key="U6cGFzc3dvcmQ", prefix="Custom"), "Custom U6cGFzc3dvcmQ"),
+        (
+            BasicAuthorizationHeaderAuth(header="Custom-Header: Custom-Value"),
+            "Custom-Header: Custom-Value",
+        ),
+        (
+            TokenAuth(token="1234", prefix="Bearer"),
+            "Bearer 1234",
+        ),
     ],
 )
 def test_auth(httpx_mock, auth_instance, expected_header):
