@@ -19,10 +19,10 @@ pip install ottu-py[django]
 ## Initialization
 
 ```python
-from ottu import Ottu
+from ottu import OttuAsync as Ottu
 from ottu.auth import APIKeyAuth
 
-ottu = Ottu(
+ottu = await Ottu(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key")
 )
