@@ -11,3 +11,15 @@ def interruption_handler(func):
             return e.as_dict()
 
     return wrapper
+
+
+def async_interruption_handler(func):
+    """Async decorator to handle keyboard interruption."""
+
+    async def wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except APIInterruptError as e:
+            return e.as_dict()
+
+    return wrapper

@@ -1,0 +1,97 @@
+import typing
+
+from . import urls
+from .enums import HTTPMethod
+from .request import OttuPYResponse
+from .utils.helpers import remove_empty_values
+
+if typing.TYPE_CHECKING:
+    from .ottu_async import OttuAsync
+
+
+class AsyncCard:
+    def __init__(self, ottu: "OttuAsync"):
+        self.ottu = ottu
+
+    async def _get_cards(
+        self,
+        customer_id: typing.Optional[str] = None,
+        pg_codes: typing.Optional[typing.List] = None,
+        agreement_id: typing.Optional[str] = None,
+    ) -> OttuPYResponse:
+        if customer_id is None:
+            customer_id = self.ottu.customer_id
+        payload = {
+            "type": self.ottu.env_type,
+            "customer_id": customer_id,
+            "pg_codes": pg_codes,
+            "agreement_id": agreement_id,
+        }
+        payload = remove_empty_values(payload)
+        return await self.ottu.send_request(
+            path=urls.USER_CARDS,
+            method=HTTPMethod.POST,
+            json=payload,
+        )
+
+    async def get_cards(
+        self,
+        customer_id: typing.Optional[str] = None,
+        pg_codes: typing.Optional[typing.List] = None,
+        agreement_id: typing.Optional[str] = None,
+    ) -> dict:
+        ottu_py_response = await self._get_cards(
+            customer_id=customer_id,
+            pg_codes=pg_codes,
+            agreement_id=agreement_id,
+        )
+        return ottu_py_response.as_dict()
+
+    async def list(
+        self,
+        customer_id: typing.Optional[str] = None,
+        pg_codes: typing.Optional[typing.List] = None,
+        agreement_id: typing.Optional[str] = None,
+    ) -> dict:
+        return await self.get_cards(
+            customer_id=customer_id,
+            pg_codes=pg_codes,
+            agreement_id=agreement_id,
+        )
+
+    async def get(
+        self,
+        customer_id: typing.Optional[str] = None,
+        pg_codes: typing.Optional[typing.List] = None,
+        agreement_id: typing.Optional[str] = None,
+    ) -> typing.Optional[dict]:
+        ottu_py_response = await self._get_cards(
+            customer_id=customer_id,
+            pg_codes=pg_codes,
+            agreement_id=agreement_id,
+        )
+        if ottu_py_response.success:
+            try:
+                return ottu_py_response.response[0]
+            except IndexError:
+                pass
+        return None
+
+    async def delete(
+        self,
+        token: str,
+        customer_id: typing.Optional[str] = None,
+    ) -> dict:
+        customer_id = customer_id or self.ottu.customer_id
+        ottu_py_response = await self.ottu.send_request(
+            path=f"{urls.USER_CARDS}{token}/",
+            method=HTTPMethod.DELETE,
+            params={
+                "customer_id": customer_id,
+                "type": self.ottu.env_type,
+            },
+        )
+        return ottu_py_response.as_dict()
+
+    def __repr__(self):
+        return f"AsyncCard({self.ottu.session.customer_id})"
