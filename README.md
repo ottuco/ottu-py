@@ -506,7 +506,7 @@ print(response)
 
 ## Async Support
 
-The SDK provides full asynchronous support through the `OttuAsync` class using Django's `sync_to_async` wrapper. This ensures 100% identical behavior between sync and async versions while providing proper async/await support.
+The SDK provides full asynchronous support through the `OttuAsync` class using `asgiref.sync.sync_to_async` wrapper. This ensures 100% identical behavior between sync and async versions while providing proper async/await support.
 
 ### Installation
 

@@ -291,9 +291,8 @@ class TestOttuAsyncSession:
             assert response["success"] is True
 
     @pytest.mark.asyncio
-    async def test_session_operations(self, httpx_mock, auth_api_key):
-        """Test async session operations (capture, refund, void, etc)."""
-        # Test capture
+    async def test_session_capture(self, httpx_mock, auth_api_key):
+        """Test async session capture operation."""
         httpx_mock.add_response(
             url="https://test.ottu.dev/b/pbl/v2/operation/",
             method="POST",
@@ -302,4 +301,56 @@ class TestOttuAsyncSession:
         )
         async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
             response = await ottu.session.capture(session_id="test-session")
+            assert response["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_session_refund(self, httpx_mock, auth_api_key):
+        """Test async session refund operation."""
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/operation/",
+            method="POST",
+            status_code=200,
+            json={"detail": "Success"},
+        )
+        async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
+            response = await ottu.session.refund(session_id="test-session")
+            assert response["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_session_void(self, httpx_mock, auth_api_key):
+        """Test async session void operation."""
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/operation/",
+            method="POST",
+            status_code=200,
+            json={"detail": "Success"},
+        )
+        async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
+            response = await ottu.session.void(session_id="test-session")
+            assert response["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_session_cancel(self, httpx_mock, auth_api_key):
+        """Test async session cancel operation."""
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/operation/",
+            method="POST",
+            status_code=200,
+            json={"detail": "Success"},
+        )
+        async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
+            response = await ottu.session.cancel(session_id="test-session")
+            assert response["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_session_expire(self, httpx_mock, auth_api_key):
+        """Test async session expire operation."""
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/operation/",
+            method="POST",
+            status_code=200,
+            json={"detail": "Success"},
+        )
+        async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
+            response = await ottu.session.expire(session_id="test-session")
             assert response["success"] is True

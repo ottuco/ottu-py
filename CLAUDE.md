@@ -64,20 +64,19 @@ bump2version major  # 1.1.0 → 2.0.0
 
 2. **Session Management**: Handles payment checkout sessions
    - **Session** (`src/ottu/session.py`): Synchronous session operations
-   - **AsyncSession** (`src/ottu/async_session.py`): Asynchronous session operations
+   - **AsyncSessionWrapper** (`src/ottu/async_ottu.py`): Asynchronous session operations wrapper
    - Create, retrieve, and update sessions
    - Execute operations: capture, refund, void, cancel, expire
    - Auto-flow feature for automatic payment gateway selection
 
 3. **Card Management**: Manages customer payment cards
    - **Card** (`src/ottu/cards.py`): Synchronous card operations
-   - **AsyncCard** (`src/ottu/async_cards.py`): Asynchronous card operations
+   - **AsyncCardWrapper** (`src/ottu/async_ottu.py`): Asynchronous card operations wrapper
    - List, get, and delete stored cards
 
 4. **Request Handling** (`src/ottu/request.py`): HTTP request processing
    - **BaseRequestResponseHandler**: Shared logic for request/response handling
    - **RequestResponseHandler**: Synchronous HTTP requests using httpx.Client
-   - **AsyncRequestResponseHandler**: Asynchronous HTTP requests using httpx.AsyncClient
 
 5. **Authentication** (`src/ottu/auth.py`): Multiple authentication strategies
    - APIKeyAuth: Simple API key authentication
