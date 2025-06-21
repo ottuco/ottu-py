@@ -1,0 +1,671 @@
+import logging
+import typing
+
+from .decorators import interruption_handler
+from .enums import HTTPMethod, TxnType
+from .errors import APIInterruptError, ValidationError
+from .request import OttuPYResponse
+from .session import PaymentMethod
+from .utils.helpers import remove_empty_values
+
+if typing.TYPE_CHECKING:
+    from .async_ottu import OttuAsync
+
+logger = logging.getLogger("ottu-py")
+
+
+class AsyncSession:
+    url_session_create = "/b/checkout/v1/pymt-txn/"
+    url_ops = "/b/pbl/v2/operation/"
+    url_auto_debit = "/b/pbl/v2/auto-debit/"
+
+    amount: typing.Optional[str] = None
+    attachment: typing.Optional[str] = None
+    attachment_short_url: typing.Optional[str] = None
+    billing_address: typing.Optional[dict] = None
+    checkout_short_url: typing.Optional[str] = None
+    checkout_url: typing.Optional[str] = None
+    currency_code: typing.Optional[str] = None
+    customer_email: typing.Optional[str] = None
+    customer_first_name: typing.Optional[str] = None
+    customer_last_name: typing.Optional[str] = None
+    customer_id: typing.Optional[str] = None
+    customer_phone: typing.Optional[str] = None
+    due_datetime: typing.Optional[str] = None
+    email_recipients: typing.Optional[list[str]] = None
+    expiration_time: typing.Optional[str] = None
+    extra: typing.Optional[dict] = None
+    initiator_id: typing.Optional[int] = None
+    language: typing.Optional[str] = None
+    mode: typing.Optional[str] = None
+    notifications: typing.Optional[dict] = None
+    operation: typing.Optional[str] = None
+    order_no: typing.Optional[str] = None
+    payment_methods: typing.Optional[list[PaymentMethod]] = None
+    pg_codes: typing.Optional[list[str]] = None
+    qr_code_url: typing.Optional[str] = None
+    redirect_url: typing.Optional[str] = None
+    session_id: typing.Optional[str] = None
+    shipping_address: typing.Optional[dict] = None
+    state: typing.Optional[str] = None
+    type: typing.Optional[str] = None
+    vendor_name: typing.Optional[str] = None
+    webhook_url: typing.Optional[str] = None
+
+    def __init__(self, ottu: "OttuAsync", **data):
+        self.ottu = ottu
+        for field, value in data.items():
+            setattr(self, field, value)
+
+        payment_methods = getattr(self, "payment_methods", [])
+        if payment_methods:
+            self.payment_methods = [
+                PaymentMethod(
+                    **payment_method,
+                )
+                for payment_method in payment_methods
+            ]
+
+    def __repr__(self):
+        return f"AsyncSession({self.session_id or '######'})"
+
+    def __bool__(self):
+        return bool(self.session_id)
+
+    def as_dict(self):
+        fields = [
+            "amount",
+            "attachment",
+            "attachment_short_url",
+            "billing_address",
+            "checkout_short_url",
+            "checkout_url",
+            "currency_code",
+            "customer_email",
+            "customer_first_name",
+            "customer_last_name",
+            "customer_id",
+            "customer_phone",
+            "due_datetime",
+            "email_recipients",
+            "expiration_time",
+            "extra",
+            "initiator_id",
+            "language",
+            "mode",
+            "notifications",
+            "operation",
+            "order_no",
+            "payment_methods",
+            "pg_codes",
+            "qr_code_url",
+            "redirect_url",
+            "session_id",
+            "shipping_address",
+            "state",
+            "type",
+            "vendor_name",
+            "webhook_url",
+        ]
+        return remove_empty_values(
+            {field: getattr(self, field, "") for field in fields},
+        )
+
+    def __path_to_file(self, path: str) -> typing.Tuple[str, bytes]:
+        with open(path, "rb") as f:
+            content = f.read()
+            name = f.name or "attachment.pdf"
+        return name, content
+
+    async def create(
+        self,
+        *,
+        txn_type: TxnType,
+        amount: str,
+        currency_code: str,
+        pg_codes: list[str],
+        payment_type: str = "one_off",
+        customer_id: typing.Optional[str] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        agreement: typing.Optional[dict] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+        include_sdk_setup_preload: typing.Optional[bool] = None,
+        **kwargs,
+    ) -> dict:
+        """
+        Creates a new checkout session.
+        """
+        if kwargs:
+            msg = (
+                f"The following arguments are not "
+                f"supported by the SDK: {', '.join(kwargs.keys())}"
+            )
+            logger.warning(msg)
+
+        customer_id = customer_id or self.ottu.customer_id
+        payload = {
+            "type": txn_type.value,
+            "amount": amount,
+            "currency_code": currency_code,
+            "pg_codes": pg_codes,
+            "payment_type": payment_type,
+            "customer_id": customer_id,
+            "customer_email": customer_email,
+            "customer_phone": customer_phone,
+            "customer_first_name": customer_first_name,
+            "customer_last_name": customer_last_name,
+            "agreement": agreement,
+            "card_acceptance_criteria": card_acceptance_criteria,
+            "billing_address": billing_address,
+            "due_datetime": due_datetime,
+            "email_recipients": email_recipients,
+            "expiration_time": expiration_time,
+            "extra": extra,
+            "generate_qr_code": generate_qr_code,
+            "language": language,
+            "mode": mode,
+            "notifications": notifications,
+            "order_no": order_no,
+            "product_type": product_type,
+            "redirect_url": redirect_url,
+            "shopping_address": shopping_address,
+            "shortify_attachment_url": shortify_attachment_url,
+            "shortify_checkout_url": shortify_checkout_url,
+            "vendor_name": vendor_name,
+            "webhook_url": webhook_url,
+            "include_sdk_setup_preload": include_sdk_setup_preload,
+        }
+        payload = remove_empty_values(payload)
+        payload.update(kwargs)  # `kwargs` may contain `None` values
+        if attachment:
+            json_or_form = {
+                "data": payload,
+                "files": {"attachment": self.__path_to_file(path=attachment)},
+            }
+        else:
+            json_or_form = {
+                "json": payload,
+            }
+        ottu_py_response = await self.ottu.send_request(
+            path=self.url_session_create,
+            method=HTTPMethod.POST,
+            **json_or_form,
+        )
+        session = AsyncSession(
+            ottu=self.ottu,
+            **ottu_py_response.response,
+        )
+        if ottu_py_response.success:
+            self.ottu._update_session(session)
+        return ottu_py_response.as_dict()
+
+    async def retrieve(self, session_id: str) -> dict:
+        """
+        Retrieves a checkout session.
+        :param session_id: Session ID
+        """
+        ottu_py_response = await self.ottu.send_request(
+            path=f"{self.url_session_create}{session_id}",
+            method=HTTPMethod.GET,
+        )
+        session = AsyncSession(
+            ottu=self.ottu,
+            **ottu_py_response.response,
+        )
+        if ottu_py_response.success:
+            self.ottu._update_session(session)
+        return ottu_py_response.as_dict()
+
+    async def refresh(
+        self, session_id: typing.Optional[str] = None
+    ) -> typing.Optional[dict]:
+        """
+        Reloads the payment attributes from upstream by calling the `retrieve` method.
+        """
+        session_id = session_id or self.session_id
+        if session_id:
+            response = await self.retrieve(session_id=session_id)
+            if response["success"]:
+                return response
+        return None
+
+    async def update(
+        self,
+        *,
+        amount: typing.Optional[str] = None,
+        currency_code: typing.Optional[str] = None,
+        pg_codes: typing.Optional[list[str]] = None,
+        customer_id: typing.Optional[str] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+        **kwargs,
+    ) -> dict:
+        payload = {
+            "amount": amount,
+            "currency_code": currency_code,
+            "pg_codes": pg_codes,
+            "customer_id": customer_id,
+            "customer_email": customer_email,
+            "customer_phone": customer_phone,
+            "customer_first_name": customer_first_name,
+            "customer_last_name": customer_last_name,
+            "billing_address": billing_address,
+            "due_datetime": due_datetime,
+            "email_recipients": email_recipients,
+            "expiration_time": expiration_time,
+            "extra": extra,
+            "generate_qr_code": generate_qr_code,
+            "language": language,
+            "mode": mode,
+            "notifications": notifications,
+            "order_no": order_no,
+            "product_type": product_type,
+            "redirect_url": redirect_url,
+            "shopping_address": shopping_address,
+            "shortify_attachment_url": shortify_attachment_url,
+            "shortify_checkout_url": shortify_checkout_url,
+            "vendor_name": vendor_name,
+            "webhook_url": webhook_url,
+        }
+        payload = remove_empty_values(payload)
+        payload.update(kwargs)  # `kwargs` may contain `None` values
+        if attachment:
+            json_or_form = {
+                "data": payload,
+                "files": {"attachment": self.__path_to_file(path=attachment)},
+            }
+        else:
+            json_or_form = {
+                "json": payload,
+            }
+        ottu_py_response = await self.ottu.send_request(
+            path=f"{self.url_session_create}{self.session_id}",
+            method=HTTPMethod.PATCH,
+            **json_or_form,
+        )
+        session = AsyncSession(ottu=self.ottu, **ottu_py_response.response)
+        if ottu_py_response.success:
+            self.ottu._update_session(session)
+        return ottu_py_response.as_dict()
+
+    async def auto_debit(self, token: str, session_id: str) -> dict:
+        payload = {
+            "session_id": session_id,
+            "token": token,
+        }
+        ottu_py_response = await self.ottu.send_request(
+            path=self.url_auto_debit,
+            method=HTTPMethod.POST,
+            json=payload,
+        )
+        return ottu_py_response.as_dict()
+
+    async def ops(
+        self,
+        operation: str,
+        order_id: typing.Optional[str] = None,
+        session_id: typing.Optional[str] = None,
+        amount: typing.Optional[str] = None,
+        headers: typing.Optional[dict] = None,
+    ) -> OttuPYResponse:
+        if session_id is None:
+            session_id = self.session_id
+
+        if not session_id and not order_id:
+            raise ValidationError("session_id or order_id is required")
+
+        payload = {
+            "session_id": session_id,
+            "order_no": order_id,
+            "operation": operation,
+            "amount": amount,
+        }
+        payload = remove_empty_values(payload)
+        return await self.ottu.send_request(
+            path=self.url_ops,
+            method=HTTPMethod.POST,
+            json=payload,
+            headers=headers,
+        )
+
+    async def cancel(
+        self,
+        order_id: typing.Optional[str] = None,
+        session_id: typing.Optional[str] = None,
+    ) -> dict:
+        ottu_py_response = await self.ops(
+            operation="cancel",
+            order_id=order_id,
+            session_id=session_id,
+        )
+        if ottu_py_response.success:
+            await self.refresh()
+        return ottu_py_response.as_dict()
+
+    async def expire(
+        self,
+        order_id: typing.Optional[str] = None,
+        session_id: typing.Optional[str] = None,
+    ) -> dict:
+        ottu_py_response = await self.ops(
+            operation="expire",
+            order_id=order_id,
+            session_id=session_id,
+        )
+        if ottu_py_response.success:
+            await self.refresh()
+        return ottu_py_response.as_dict()
+
+    async def delete(
+        self,
+        order_id: typing.Optional[str] = None,
+        session_id: typing.Optional[str] = None,
+    ) -> dict:
+        ottu_py_response = await self.ops(
+            operation="delete",
+            order_id=order_id,
+            session_id=session_id,
+        )
+        return ottu_py_response.as_dict()
+
+    async def capture(
+        self,
+        order_id: typing.Optional[str] = None,
+        session_id: typing.Optional[str] = None,
+        amount: typing.Optional[str] = None,
+        tracking_key: typing.Optional[str] = None,
+    ) -> dict:
+        headers = None
+        if tracking_key:
+            headers = {
+                "Tracking-Key": tracking_key,
+            }
+        ottu_py_response = await self.ops(
+            operation="capture",
+            order_id=order_id,
+            session_id=session_id,
+            amount=amount,
+            headers=headers,
+        )
+        if ottu_py_response.success:
+            await self.refresh()
+        return ottu_py_response.as_dict()
+
+    async def refund(
+        self,
+        order_id: typing.Optional[str] = None,
+        session_id: typing.Optional[str] = None,
+        amount: typing.Optional[str] = None,
+        tracking_key: typing.Optional[str] = None,
+    ) -> dict:
+        headers = None
+        if tracking_key:
+            headers = {
+                "Tracking-Key": tracking_key,
+            }
+        ottu_py_response = await self.ops(
+            operation="refund",
+            order_id=order_id,
+            session_id=session_id,
+            amount=amount,
+            headers=headers,
+        )
+        if ottu_py_response.success:
+            await self.refresh()
+        return ottu_py_response.as_dict()
+
+    async def void(
+        self,
+        order_id: typing.Optional[str] = None,
+        session_id: typing.Optional[str] = None,
+        tracking_key: typing.Optional[str] = None,
+    ) -> dict:
+        headers = None
+        if tracking_key:
+            headers = {
+                "Tracking-Key": tracking_key,
+            }
+        ottu_py_response = await self.ops(
+            operation="void",
+            order_id=order_id,
+            session_id=session_id,
+            headers=headers,
+        )
+        if ottu_py_response.success:
+            await self.refresh()
+        return ottu_py_response.as_dict()
+
+    async def get_pg_codes(self, plugin, currency, tokenizable=False) -> list:
+        if self.payment_methods:
+            return [pm.code for pm in self.payment_methods]
+
+        response = await self.ottu.get_payment_methods(
+            plugin=plugin,
+            currencies=[
+                currency,
+            ],
+            tokenizable=tokenizable,
+        )
+        if not response["success"]:
+            raise APIInterruptError(**response)
+        return [pm["code"] for pm in response["response"]["payment_methods"]]
+
+    async def get_auto_debit_pg_codes(self, plugin, currency) -> list:
+        # There is no way to identify the
+        # cached payment method supports auto debit or not.
+        # So, we are calling the API again.
+        response = await self.ottu.get_payment_methods(
+            plugin=plugin,
+            currencies=[
+                currency,
+            ],
+            tokenizable=True,
+        )
+        if not response["success"]:
+            raise APIInterruptError(**response)
+        return [pm["code"] for pm in response["response"]["payment_methods"]]
+
+    def get_token_from_db(self, agreement, customer_id) -> str:
+        raise NotImplementedError("Please implement this method in your subclass")
+
+    @interruption_handler
+    async def checkout_autoflow(
+        self,
+        *,
+        txn_type: TxnType,
+        amount: str,
+        currency_code: str,
+        payment_type: str = "one_off",
+        customer_id: typing.Optional[str] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        agreement: typing.Optional[dict] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+        include_sdk_setup_preload: typing.Optional[bool] = None,
+        checkout_extra_args: typing.Optional[dict] = None,
+    ):
+        pg_codes = await self.get_pg_codes(plugin=txn_type, currency=currency_code)
+        checkout_extra_args = checkout_extra_args or {}
+        return await self.create(
+            txn_type=txn_type,
+            amount=amount,
+            currency_code=currency_code,
+            pg_codes=pg_codes,
+            payment_type=payment_type,
+            customer_id=customer_id,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            customer_first_name=customer_first_name,
+            customer_last_name=customer_last_name,
+            agreement=agreement,
+            card_acceptance_criteria=card_acceptance_criteria,
+            attachment=attachment,
+            billing_address=billing_address,
+            due_datetime=due_datetime,
+            email_recipients=email_recipients,
+            expiration_time=expiration_time,
+            extra=extra,
+            generate_qr_code=generate_qr_code,
+            language=language,
+            mode=mode,
+            notifications=notifications,
+            order_no=order_no,
+            product_type=product_type,
+            redirect_url=redirect_url,
+            shopping_address=shopping_address,
+            shortify_attachment_url=shortify_attachment_url,
+            shortify_checkout_url=shortify_checkout_url,
+            vendor_name=vendor_name,
+            webhook_url=webhook_url,
+            include_sdk_setup_preload=include_sdk_setup_preload,
+            **checkout_extra_args,
+        )
+
+    @interruption_handler
+    async def auto_debit_autoflow(
+        self,
+        *,
+        txn_type: TxnType,
+        amount: str,
+        currency_code: str,
+        customer_id: str,
+        agreement: dict,
+        pg_codes: typing.Optional[list[str]] = None,
+        customer_email: typing.Optional[str] = None,
+        customer_phone: typing.Optional[str] = None,
+        customer_first_name: typing.Optional[str] = None,
+        customer_last_name: typing.Optional[str] = None,
+        card_acceptance_criteria: typing.Optional[dict] = None,
+        attachment: typing.Optional[str] = None,
+        billing_address: typing.Optional[dict] = None,
+        due_datetime: typing.Optional[str] = None,
+        email_recipients: typing.Optional[list[str]] = None,
+        expiration_time: typing.Optional[str] = None,
+        extra: typing.Optional[dict] = None,
+        generate_qr_code: typing.Optional[bool] = None,
+        language: typing.Optional[str] = None,
+        mode: typing.Optional[str] = None,
+        notifications: typing.Optional[dict] = None,
+        order_no: typing.Optional[str] = None,
+        product_type: typing.Optional[str] = None,
+        redirect_url: typing.Optional[str] = None,
+        shopping_address: typing.Optional[dict] = None,
+        shortify_attachment_url: typing.Optional[bool] = None,
+        shortify_checkout_url: typing.Optional[bool] = None,
+        vendor_name: typing.Optional[str] = None,
+        webhook_url: typing.Optional[str] = None,
+        include_sdk_setup_preload: typing.Optional[bool] = None,
+        checkout_extra_args: typing.Optional[dict] = None,
+        token: typing.Optional[str] = None,
+    ):
+        """
+        Completes the auto debit flow by automatically
+        identifying the "latest" payment method and the token.
+        """
+        checkout_extra_args = checkout_extra_args or {}
+        if not token:
+            token = self.get_token_from_db(agreement=agreement, customer_id=customer_id)
+        if not pg_codes:
+            pg_codes = await self.get_auto_debit_pg_codes(
+                plugin=txn_type,
+                currency=currency_code,
+            )
+        checkout_response = await self.create(
+            txn_type=txn_type,
+            amount=amount,
+            currency_code=currency_code,
+            pg_codes=pg_codes,
+            payment_type="auto_debit",
+            customer_id=customer_id,
+            customer_email=customer_email,
+            customer_phone=customer_phone,
+            customer_first_name=customer_first_name,
+            customer_last_name=customer_last_name,
+            agreement=agreement,
+            card_acceptance_criteria=card_acceptance_criteria,
+            attachment=attachment,
+            billing_address=billing_address,
+            due_datetime=due_datetime,
+            email_recipients=email_recipients,
+            expiration_time=expiration_time,
+            extra=extra,
+            generate_qr_code=generate_qr_code,
+            language=language,
+            mode=mode,
+            notifications=notifications,
+            order_no=order_no,
+            product_type=product_type,
+            redirect_url=redirect_url,
+            shopping_address=shopping_address,
+            shortify_attachment_url=shortify_attachment_url,
+            shortify_checkout_url=shortify_checkout_url,
+            vendor_name=vendor_name,
+            webhook_url=webhook_url,
+            include_sdk_setup_preload=include_sdk_setup_preload,
+            **checkout_extra_args,
+        )
+        if not checkout_response["success"]:
+            raise APIInterruptError(**checkout_response)
+        session_id = checkout_response["response"]["session_id"]
+        return await self.auto_debit(token=token, session_id=session_id)

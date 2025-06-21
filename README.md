@@ -14,6 +14,8 @@ For Django integration, use the following command.
 pip install ottu-py[django]
 ```
 
+The SDK supports both synchronous and asynchronous operations out of the box. For async usage, see the [Async Support](#async-support) section.
+
 # APIs
 
 ## Initialization
@@ -495,6 +497,169 @@ response = ottu.auto_debit_autoflow(
 )
 print(response)
 ```
+
+## Async Support
+
+The SDK provides full asynchronous support through the `OttuAsync` class, which mirrors all functionality of the synchronous `Ottu` class. All async methods have the same signatures as their sync counterparts.
+
+### Basic Async Usage
+
+```python
+from ottu import OttuAsync
+from ottu.auth import APIKeyAuth
+from ottu.enums import TxnType
+
+async def main():
+    async with OttuAsync(
+        merchant_id="merchant.id.ottu.dev",
+        auth=APIKeyAuth("your-secret-api-key"),
+        is_sandbox=True
+    ) as ottu:
+        # Create checkout session
+        response = await ottu.checkout(
+            txn_type=TxnType.PAYMENT_REQUEST,
+            amount="20.23",
+            currency_code="KWD",
+            pg_codes=["mpgs", "ottu_pg"],
+            customer_phone="+96550000000",
+            order_no="1234567890",
+        )
+        print(response)
+
+import asyncio
+asyncio.run(main())
+```
+
+### Async Context Manager
+
+Always use `async with` when working with `OttuAsync` to ensure proper cleanup of HTTP connections:
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    # All operations here
+    pass
+```
+
+### Async Session Operations
+
+All session operations work the same way as the sync version:
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    # Create session
+    response = await ottu.session.create(
+        txn_type=TxnType.PAYMENT_REQUEST,
+        amount="20.23",
+        currency_code="KWD",
+        pg_codes=["mpgs"]
+    )
+
+    # Retrieve session
+    session = await ottu.session.retrieve(session_id="your-session-id")
+
+    # Update session
+    updated = await ottu.session.update(
+        session_id="your-session-id",
+        amount="25.00"
+    )
+
+    # Operations
+    await ottu.session.capture(session_id="your-session-id", amount="20.23")
+    await ottu.session.refund(session_id="your-session-id", amount="10.00")
+    await ottu.session.void(session_id="your-session-id")
+    await ottu.session.cancel(session_id="your-session-id")
+    await ottu.session.expire(session_id="your-session-id")
+    await ottu.session.delete(session_id="your-session-id")
+```
+
+### Async Card Operations
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+    customer_id="your-customer-id"
+) as ottu:
+    # List all cards
+    cards = await ottu.cards.list()
+
+    # Get latest card
+    card = await ottu.cards.get()
+
+    # Delete a card
+    result = await ottu.cards.delete(token="your-card-token")
+```
+
+### Async Autoflow Operations
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    # Checkout autoflow
+    response = await ottu.checkout_autoflow(
+        txn_type=TxnType.PAYMENT_REQUEST,
+        amount="20.23",
+        currency_code="KWD"
+    )
+
+    # Auto-debit autoflow
+    response = await ottu.auto_debit_autoflow(
+        txn_type=TxnType.PAYMENT_REQUEST,
+        amount="20.23",
+        currency_code="KWD",
+        token="your-card-token",
+        agreement={"id": "agreement-123"}
+    )
+```
+
+### Async Payment Methods
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    payment_methods = await ottu.get_payment_methods(
+        plugin="payment_request",
+        currencies=["KWD", "USD"]
+    )
+```
+
+### Error Handling
+
+Async operations raise the same exceptions as sync operations:
+
+```python
+from ottu.exceptions import OttuHTTPException
+
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    try:
+        response = await ottu.checkout(
+            txn_type=TxnType.PAYMENT_REQUEST,
+            amount="20.23",
+            currency_code="KWD"
+        )
+    except OttuHTTPException as e:
+        print(f"Error: {e.status_code} - {e.detail}")
+```
+
+### Design Principles
+
+- **Minimal Code Duplication**: Async classes inherit from base classes where possible
+- **Consistent API**: Async methods have identical signatures to sync methods
+- **Context Manager Support**: `OttuAsync` supports `async with` for automatic cleanup
+- **Shared Logic**: Request handling, response parsing, and business logic are shared between sync and async implementations
 
 ## Django Integration
 

@@ -1,4 +1,5 @@
 import logging
+import typing
 from json import JSONDecodeError
 from urllib.parse import urlparse
 
@@ -13,8 +14,16 @@ class OttuPYResponse(ResponseMixin):
     ...
 
 
-class RequestResponseHandler:
-    def __init__(self, session: httpx.Client, method: str, url: str, **kwargs):
+class BaseRequestResponseHandler:
+    """Base class for shared functionality between sync and async handlers."""
+
+    def __init__(
+        self,
+        session: typing.Union[httpx.Client, httpx.AsyncClient],
+        method: str,
+        url: str,
+        **kwargs,
+    ):
         self.session = session
         self.method = method
         self.url = url
@@ -90,11 +99,34 @@ class RequestResponseHandler:
             error={"detail": str(exc)},
         )
 
+    def _log_request(self):
+        logger.info(
+            f"Sending {self.method} request to {self.url} with args {self.kwargs}",
+        )
+
+    def _log_response(self, response: OttuPYResponse):
+        if response.success:
+            logger.info(
+                f"Received {response.status_code} response "
+                f"from {self.url} with args {self.kwargs}",
+            )
+        else:
+            logger.error(
+                f"Received {response.status_code} response "
+                f"from {self.url} with args {self.kwargs}. Error: {response.error}",
+            )
+
+
+class RequestResponseHandler(BaseRequestResponseHandler):
+    """Synchronous request handler."""
+
+    def __init__(self, session: httpx.Client, method: str, url: str, **kwargs):
+        super().__init__(session, method, url, **kwargs)
+        self.session: httpx.Client = session
+
     def _process(self) -> OttuPYResponse:
         try:
-            logger.info(
-                f"Sending {self.method} request to {self.url} with args {self.kwargs}",
-            )
+            self._log_request()
             response = self.session.request(
                 method=self.method,
                 url=self.url,
@@ -108,14 +140,32 @@ class RequestResponseHandler:
 
     def process(self) -> OttuPYResponse:
         response = self._process()
-        if response.success:
-            logger.info(
-                f"Received {response.status_code} response "
-                f"from {self.url} with args {self.kwargs}",
+        self._log_response(response)
+        return response
+
+
+class AsyncRequestResponseHandler(BaseRequestResponseHandler):
+    """Asynchronous request handler."""
+
+    def __init__(self, session: httpx.AsyncClient, method: str, url: str, **kwargs):
+        super().__init__(session, method, url, **kwargs)
+        self.session: httpx.AsyncClient = session
+
+    async def _process(self) -> OttuPYResponse:
+        try:
+            self._log_request()
+            response = await self.session.request(
+                method=self.method,
+                url=self.url,
+                **self.kwargs,
             )
-        else:
-            logger.error(
-                f"Received {response.status_code} response "
-                f"from {self.url} with args {self.kwargs}. Error: {response.error}",
-            )
+            return self.process_response(response)
+        except httpx.HTTPError as exc:
+            return self.process_httpx_error(exc)
+        except Exception as exc:
+            return self.process_unknown_error(exc)
+
+    async def process(self) -> OttuPYResponse:
+        response = await self._process()
+        self._log_response(response)
         return response
