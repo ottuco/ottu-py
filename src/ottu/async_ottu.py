@@ -5,7 +5,7 @@ try:
 except ImportError:
     raise ImportError(
         "asgiref is required for async support. "
-        "Install with: pip install 'ottu-py[django]' or pip install 'ottu-py[fastapi]'",
+        "Install with: pip install 'ottu-py[async]'",
     )
 
 from .ottu import Ottu

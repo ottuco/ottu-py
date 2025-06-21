@@ -44,12 +44,11 @@ django = [
     "django<4.3",
     "asgiref>=3.6.0"
 ]
-fastapi = [
-    "fastapi",
+async = [
     "asgiref>=3.6.0"
 ]
 all = [
-    "ottu-py[django,fastapi]"
+    "ottu-py[django,async]"
 ]
 
 # for test/dev purposes
