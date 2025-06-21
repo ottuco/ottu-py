@@ -16,7 +16,9 @@
       "Bash(rm:*)",
       "Bash(pre-commit run:*)",
       "Bash(flake8:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ],
     "deny": []
   }
