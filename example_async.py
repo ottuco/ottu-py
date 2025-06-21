@@ -11,7 +11,7 @@ from ottu.enums import TxnType
 async def main():
     """Demo async functionality."""
     print("🚀 Starting Ottu Async SDK Demo...")
-    
+
     # Initialize async client
     async with OttuAsync(
         merchant_id="merchant.example.ottu.dev",
@@ -20,10 +20,10 @@ async def main():
         timeout=30
     ) as ottu:
         print(f"✅ Connected to {ottu.merchant_id} ({ottu.env_type})")
-        
+
         # Note: These will fail with real API calls since we're using demo credentials
         # But they demonstrate the async API structure
-        
+
         try:
             # Example 1: Create checkout session
             print("\n📦 Creating checkout session...")
@@ -79,8 +79,8 @@ async def main():
         
         print("\n🎉 Demo completed successfully!")
         print(f"   Client type: {type(ottu).__name__}")
-        print(f"   Supports async context manager: ✅")
-        print(f"   All methods are async: ✅")
+        print("   Supports async context manager: ✅")
+        print("   All methods are async: ✅")
 
 
 if __name__ == "__main__":

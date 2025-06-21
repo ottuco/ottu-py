@@ -43,8 +43,11 @@ dependencies = [
 django = [
     "django<4.3"
 ]
+async = [
+    "asgiref>=3.6.0"
+]
 all = [
-    "ottu-py[django]"
+    "ottu-py[django,async]"
 ]
 
 # for test/dev purposes

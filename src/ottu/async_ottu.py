@@ -1,376 +1,188 @@
 import typing
+from functools import wraps
 
-import httpx
-from httpx import Auth
+try:
+    from asgiref.sync import sync_to_async
+except ImportError:
+    raise ImportError(
+        "asgiref is required for async support. "
+        "Install with: pip install 'ottu-py[async]'"
+    )
 
-from . import urls
-from .async_cards import AsyncCard
-from .async_session import AsyncSession
-from .enums import HTTPMethod, TxnType
-from .request import AsyncRequestResponseHandler, OttuPYResponse
-from .utils.helpers import remove_empty_values
+from .ottu import Ottu
+
+
+def async_method(func):
+    """Decorator to convert sync methods to async using sync_to_async."""
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        return await sync_to_async(func)(*args, **kwargs)
+    return wrapper
 
 
 class OttuAsync:
-    _session: typing.Optional[AsyncSession] = None
-    _card: typing.Optional[AsyncCard] = None
-    default_timeout: int = 30
-    session_cls: typing.Type[AsyncSession] = AsyncSession
-    request_response_handler: typing.Type[AsyncRequestResponseHandler] = (
-        AsyncRequestResponseHandler
-    )
-
-    def __init__(
-        self,
-        merchant_id: str,
-        auth: Auth,
-        customer_id: typing.Optional[str] = None,
-        is_sandbox: bool = True,
-        timeout: typing.Optional[int] = None,
-    ) -> None:
-        self.merchant_id = merchant_id
-        self.host_url = f"https://{merchant_id}"
-        self.auth = auth
-        self.customer_id = customer_id
-        self.is_sandbox = is_sandbox
-        self.env_type = "sandbox" if is_sandbox else "production"
-        self.timeout = timeout or self.default_timeout
-
-        # Other initializations
-        self.request_session = self.__create_session()
-
-    def __create_session(self) -> httpx.AsyncClient:
-        return httpx.AsyncClient(auth=self.auth)
-
-    async def send_request(
-        self,
-        path: str,
-        method: str,
-        **request_params,
-    ) -> OttuPYResponse:
-        return await self.request_response_handler(
-            session=self.request_session,
-            method=method,
-            url=f"{self.host_url}{path}",
-            timeout=self.timeout,
-            **request_params,
-        ).process()
-
-    async def close(self):
-        """Close the async client session."""
-        await self.request_session.aclose()
-
+    """Async wrapper for Ottu SDK using sync_to_async.
+    
+    This ensures 100% identical behavior between sync and async versions
+    while providing proper async/await support.
+    """
+    
+    def __init__(self, *args, **kwargs):
+        """Initialize with same arguments as Ottu."""
+        self._ottu = Ottu(*args, **kwargs)
+    
     async def __aenter__(self):
+        """Async context manager entry."""
         return self
-
+    
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.close()
-
-    # Core Methods
-
+        """Async context manager exit."""
+        # Close the underlying httpx client if it has an aclose method
+        if hasattr(self._ottu.request_session, 'aclose'):
+            await self._ottu.request_session.aclose()
+        elif hasattr(self._ottu.request_session, 'close'):
+            self._ottu.request_session.close()
+    
+    # Proxy properties to underlying Ottu instance
+    @property
+    def merchant_id(self):
+        return self._ottu.merchant_id
+    
+    @property 
+    def customer_id(self):
+        return self._ottu.customer_id
+    
+    @property
+    def env_type(self):
+        return self._ottu.env_type
+    
     @property
     def session(self):
-        if self._session is None:
-            self._session = self.session_cls(ottu=self)
-        return self._session
-
-    def _update_session(self, session: AsyncSession) -> None:
-        self._session = session
-
-    async def checkout(
-        self,
-        *,
-        txn_type: TxnType,
-        amount: str,
-        currency_code: str,
-        pg_codes: list[str],
-        payment_type: str = "one_off",
-        customer_id: typing.Optional[str] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        agreement: typing.Optional[dict] = None,
-        card_acceptance_criteria: typing.Optional[dict] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
-        include_sdk_setup_preload: typing.Optional[bool] = None,
-        **kwargs,
-    ) -> dict:
-        """
-        a proxy method to `AsyncSession.create(...)`
-        """
-        return await self.session.create(
-            txn_type=txn_type,
-            amount=amount,
-            currency_code=currency_code,
-            pg_codes=pg_codes,
-            payment_type=payment_type,
-            customer_id=customer_id,
-            customer_email=customer_email,
-            customer_phone=customer_phone,
-            customer_first_name=customer_first_name,
-            customer_last_name=customer_last_name,
-            agreement=agreement,
-            card_acceptance_criteria=card_acceptance_criteria,
-            attachment=attachment,
-            billing_address=billing_address,
-            due_datetime=due_datetime,
-            email_recipients=email_recipients,
-            expiration_time=expiration_time,
-            extra=extra,
-            generate_qr_code=generate_qr_code,
-            language=language,
-            mode=mode,
-            notifications=notifications,
-            order_no=order_no,
-            product_type=product_type,
-            redirect_url=redirect_url,
-            shopping_address=shopping_address,
-            shortify_attachment_url=shortify_attachment_url,
-            shortify_checkout_url=shortify_checkout_url,
-            vendor_name=vendor_name,
-            webhook_url=webhook_url,
-            include_sdk_setup_preload=include_sdk_setup_preload,
-            **kwargs,
-        )
-
-    async def auto_debit(
-        self,
-        token: str,
-        session_id: str,
-    ):
-        return await self.session.auto_debit(token=token, session_id=session_id)
-
+        """Return async-wrapped session."""
+        return AsyncSessionWrapper(self._ottu.session)
+    
     @property
-    def cards(self) -> AsyncCard:
-        if self._card is None:
-            self._card = AsyncCard(ottu=self)
-        return self._card
+    def cards(self):
+        """Return async-wrapped cards."""
+        return AsyncCardWrapper(self._ottu.cards)
+    
+    # Async-wrapped methods
+    @async_method
+    def send_request(self, *args, **kwargs):
+        return self._ottu.send_request(*args, **kwargs)
+    
+    @async_method
+    def checkout(self, *args, **kwargs):
+        return self._ottu.checkout(*args, **kwargs)
+    
+    @async_method
+    def auto_debit(self, *args, **kwargs):
+        return self._ottu.auto_debit(*args, **kwargs)
+    
+    @async_method
+    def checkout_autoflow(self, *args, **kwargs):
+        return self._ottu.checkout_autoflow(*args, **kwargs)
+    
+    @async_method
+    def auto_debit_autoflow(self, *args, **kwargs):
+        return self._ottu.auto_debit_autoflow(*args, **kwargs)
+    
+    @async_method
+    def get_payment_methods(self, *args, **kwargs):
+        return self._ottu.get_payment_methods(*args, **kwargs)
+    
+    @async_method
+    def raw(self, *args, **kwargs):
+        return self._ottu.raw(*args, **kwargs)
 
-    async def checkout_autoflow(
-        self,
-        *,
-        txn_type: TxnType,
-        amount: str,
-        currency_code: str,
-        payment_type: str = "one_off",
-        customer_id: typing.Optional[str] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        agreement: typing.Optional[dict] = None,
-        card_acceptance_criteria: typing.Optional[dict] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
-        include_sdk_setup_preload: typing.Optional[bool] = None,
-        checkout_extra_args: typing.Optional[dict] = None,
-    ):
-        return await self.session.checkout_autoflow(
-            txn_type=txn_type,
-            amount=amount,
-            currency_code=currency_code,
-            payment_type=payment_type,
-            customer_id=customer_id,
-            customer_email=customer_email,
-            customer_phone=customer_phone,
-            customer_first_name=customer_first_name,
-            customer_last_name=customer_last_name,
-            agreement=agreement,
-            card_acceptance_criteria=card_acceptance_criteria,
-            attachment=attachment,
-            billing_address=billing_address,
-            due_datetime=due_datetime,
-            email_recipients=email_recipients,
-            expiration_time=expiration_time,
-            extra=extra,
-            generate_qr_code=generate_qr_code,
-            language=language,
-            mode=mode,
-            notifications=notifications,
-            order_no=order_no,
-            product_type=product_type,
-            redirect_url=redirect_url,
-            shopping_address=shopping_address,
-            shortify_attachment_url=shortify_attachment_url,
-            shortify_checkout_url=shortify_checkout_url,
-            vendor_name=vendor_name,
-            webhook_url=webhook_url,
-            include_sdk_setup_preload=include_sdk_setup_preload,
-            checkout_extra_args=checkout_extra_args,
-        )
 
-    async def auto_debit_autoflow(
-        self,
-        *,
-        txn_type: TxnType,
-        amount: str,
-        currency_code: str,
-        customer_id: str,
-        agreement: dict,
-        pg_codes: typing.Optional[list[str]] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        card_acceptance_criteria: typing.Optional[dict] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
-        include_sdk_setup_preload: typing.Optional[bool] = None,
-        checkout_extra_args: typing.Optional[dict] = None,
-        token: typing.Optional[str] = None,
-    ):
-        return await self.session.auto_debit_autoflow(
-            txn_type=txn_type,
-            amount=amount,
-            currency_code=currency_code,
-            customer_id=customer_id,
-            pg_codes=pg_codes,
-            customer_email=customer_email,
-            customer_phone=customer_phone,
-            customer_first_name=customer_first_name,
-            customer_last_name=customer_last_name,
-            agreement=agreement,
-            card_acceptance_criteria=card_acceptance_criteria,
-            attachment=attachment,
-            billing_address=billing_address,
-            due_datetime=due_datetime,
-            email_recipients=email_recipients,
-            expiration_time=expiration_time,
-            extra=extra,
-            generate_qr_code=generate_qr_code,
-            language=language,
-            mode=mode,
-            notifications=notifications,
-            order_no=order_no,
-            product_type=product_type,
-            redirect_url=redirect_url,
-            shopping_address=shopping_address,
-            shortify_attachment_url=shortify_attachment_url,
-            shortify_checkout_url=shortify_checkout_url,
-            vendor_name=vendor_name,
-            webhook_url=webhook_url,
-            include_sdk_setup_preload=include_sdk_setup_preload,
-            checkout_extra_args=checkout_extra_args,
-            token=token,
-        )
+class AsyncSessionWrapper:
+    """Async wrapper for Session class."""
+    
+    def __init__(self, session):
+        self._session = session
+    
+    # Proxy properties
+    @property
+    def session_id(self):
+        return self._session.session_id
+    
+    @property
+    def checkout_url(self):
+        return self._session.checkout_url
+    
+    @property
+    def payment_methods(self):
+        return self._session.payment_methods
+    
+    # Async-wrapped methods
+    @async_method
+    def create(self, *args, **kwargs):
+        return self._session.create(*args, **kwargs)
+    
+    @async_method
+    def retrieve(self, *args, **kwargs):
+        return self._session.retrieve(*args, **kwargs)
+    
+    @async_method
+    def update(self, *args, **kwargs):
+        return self._session.update(*args, **kwargs)
+    
+    @async_method
+    def refresh(self, *args, **kwargs):
+        return self._session.refresh(*args, **kwargs)
+    
+    @async_method
+    def auto_debit(self, *args, **kwargs):
+        return self._session.auto_debit(*args, **kwargs)
+    
+    @async_method
+    def capture(self, *args, **kwargs):
+        return self._session.capture(*args, **kwargs)
+    
+    @async_method
+    def refund(self, *args, **kwargs):
+        return self._session.refund(*args, **kwargs)
+    
+    @async_method
+    def void(self, *args, **kwargs):
+        return self._session.void(*args, **kwargs)
+    
+    @async_method
+    def cancel(self, *args, **kwargs):
+        return self._session.cancel(*args, **kwargs)
+    
+    @async_method
+    def expire(self, *args, **kwargs):
+        return self._session.expire(*args, **kwargs)
+    
+    @async_method
+    def delete(self, *args, **kwargs):
+        return self._session.delete(*args, **kwargs)
 
-    async def raw(
-        self,
-        method: str,
-        path: str,
-        headers: typing.Optional[dict] = None,
-        **kwargs,
-    ):
-        """
-        To send any sort of http requests to the server.
-            method: str - HTTP method name.
-                Eg: GET, POST, PUT, DELETE, etc.
-            path: str - The path of the request.
-                Eg: /b/api/v1/dashboard/statistics
-            headers: dict - Optional headers to be sent with the request.
-            kwargs: dict - Optional parameters to be sent with the request.
-                Supports all the parameters that `httpx.AsyncClient.send` supports.
-        """
-        return await self.send_request(
-            path=path,
-            method=method,
-            headers=headers,
-            **kwargs,
-        )
 
-    async def get_payment_methods(
-        self,
-        plugin,
-        currencies: typing.Optional[list[str]] = None,
-        customer_id: typing.Optional[str] = None,
-        operation: typing.Optional[str] = None,
-        tokenizable: bool = False,
-        pg_names: typing.Optional[list[str]] = None,
-    ) -> dict:
-        response = await self._get_payment_methods(
-            plugin=plugin,
-            currencies=currencies,
-            customer_id=customer_id,
-            operation=operation,
-            tokenizable=tokenizable,
-            pg_names=pg_names,
-        )
-        return response.as_dict()
-
-    async def _get_payment_methods(
-        self,
-        plugin,
-        currencies: typing.Optional[list[str]] = None,
-        customer_id: typing.Optional[str] = None,
-        operation: typing.Optional[str] = None,
-        tokenizable: bool = False,
-        pg_names: typing.Optional[list[str]] = None,
-    ) -> OttuPYResponse:
-        payload = {
-            "plugin": plugin,
-            "currencies": currencies,
-            "customer_id": customer_id,
-            "operation": operation,
-            "tokenizable": tokenizable,
-            "pg_names": pg_names,
-            "type": "sandbox" if self.is_sandbox else "production",
-        }
-        payload = remove_empty_values(payload)
-        return await self.send_request(
-            path=urls.PAYMENT_METHODS,
-            method=HTTPMethod.POST,
-            json=payload,
-        )
-
+class AsyncCardWrapper:
+    """Async wrapper for Card class."""
+    
+    def __init__(self, cards):
+        self._cards = cards
+    
     def __repr__(self):
-        return f"OttuAsync({self.merchant_id})"
+        return f"AsyncCard({self._cards.ottu.customer_id})"
+    
+    # Async-wrapped methods
+    @async_method
+    def get_cards(self, *args, **kwargs):
+        return self._cards.get_cards(*args, **kwargs)
+    
+    @async_method
+    def list(self, *args, **kwargs):
+        return self._cards.list(*args, **kwargs)
+    
+    @async_method
+    def get(self, *args, **kwargs):
+        return self._cards.get(*args, **kwargs)
+    
+    @async_method
+    def delete(self, *args, **kwargs):
+        return self._cards.delete(*args, **kwargs)

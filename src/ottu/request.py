@@ -144,28 +144,3 @@ class RequestResponseHandler(BaseRequestResponseHandler):
         return response
 
 
-class AsyncRequestResponseHandler(BaseRequestResponseHandler):
-    """Asynchronous request handler."""
-
-    def __init__(self, session: httpx.AsyncClient, method: str, url: str, **kwargs):
-        super().__init__(session, method, url, **kwargs)
-        self.session: httpx.AsyncClient = session
-
-    async def _process(self) -> OttuPYResponse:
-        try:
-            self._log_request()
-            response = await self.session.request(
-                method=self.method,
-                url=self.url,
-                **self.kwargs,
-            )
-            return self.process_response(response)
-        except httpx.HTTPError as exc:
-            return self.process_httpx_error(exc)
-        except Exception as exc:
-            return self.process_unknown_error(exc)
-
-    async def process(self) -> OttuPYResponse:
-        response = await self._process()
-        self._log_response(response)
-        return response

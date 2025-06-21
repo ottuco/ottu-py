@@ -14,7 +14,7 @@ For Django integration, use the following command.
 pip install ottu-py[django]
 ```
 
-The SDK supports both synchronous and asynchronous operations out of the box. For async usage, see the [Async Support](#async-support) section.
+The SDK supports both synchronous and asynchronous operations out of the box. For async usage, install with `pip install 'ottu-py[async]'` and see the [Async Support](#async-support) section.
 
 # APIs
 
@@ -500,7 +500,17 @@ print(response)
 
 ## Async Support
 
-The SDK provides full asynchronous support through the `OttuAsync` class, which mirrors all functionality of the synchronous `Ottu` class. All async methods have the same signatures as their sync counterparts.
+The SDK provides full asynchronous support through the `OttuAsync` class using Django's `sync_to_async` wrapper. This ensures 100% identical behavior between sync and async versions while providing proper async/await support.
+
+### Installation
+
+To use async features, install the async extra:
+
+```bash
+pip install 'ottu-py[async]'
+```
+
+This will install `asgiref` which provides the `sync_to_async` functionality.
 
 ### Basic Async Usage
 
@@ -532,7 +542,7 @@ asyncio.run(main())
 
 ### Async Context Manager
 
-Always use `async with` when working with `OttuAsync` to ensure proper cleanup of HTTP connections:
+Always use `async with` when working with `OttuAsync` to ensure proper cleanup:
 
 ```python
 async with OttuAsync(
@@ -543,123 +553,57 @@ async with OttuAsync(
     pass
 ```
 
-### Async Session Operations
+### Identical API
 
-All session operations work the same way as the sync version:
+Since `OttuAsync` wraps the sync implementation with `sync_to_async`, all methods have identical signatures and behavior:
 
 ```python
 async with OttuAsync(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key")
 ) as ottu:
-    # Create session
-    response = await ottu.session.create(
-        txn_type=TxnType.PAYMENT_REQUEST,
-        amount="20.23",
-        currency_code="KWD",
-        pg_codes=["mpgs"]
-    )
-
-    # Retrieve session
-    session = await ottu.session.retrieve(session_id="your-session-id")
-
-    # Update session
-    updated = await ottu.session.update(
-        session_id="your-session-id",
-        amount="25.00"
-    )
-
-    # Operations
-    await ottu.session.capture(session_id="your-session-id", amount="20.23")
-    await ottu.session.refund(session_id="your-session-id", amount="10.00")
-    await ottu.session.void(session_id="your-session-id")
-    await ottu.session.cancel(session_id="your-session-id")
-    await ottu.session.expire(session_id="your-session-id")
-    await ottu.session.delete(session_id="your-session-id")
-```
-
-### Async Card Operations
-
-```python
-async with OttuAsync(
-    merchant_id="merchant.id.ottu.dev",
-    auth=APIKeyAuth("your-secret-api-key"),
-    customer_id="your-customer-id"
-) as ottu:
-    # List all cards
+    # All sync methods are available as async
+    response = await ottu.checkout(...)
     cards = await ottu.cards.list()
-
-    # Get latest card
-    card = await ottu.cards.get()
-
-    # Delete a card
-    result = await ottu.cards.delete(token="your-card-token")
-```
-
-### Async Autoflow Operations
-
-```python
-async with OttuAsync(
-    merchant_id="merchant.id.ottu.dev",
-    auth=APIKeyAuth("your-secret-api-key")
-) as ottu:
-    # Checkout autoflow
-    response = await ottu.checkout_autoflow(
-        txn_type=TxnType.PAYMENT_REQUEST,
-        amount="20.23",
-        currency_code="KWD"
-    )
-
-    # Auto-debit autoflow
-    response = await ottu.auto_debit_autoflow(
-        txn_type=TxnType.PAYMENT_REQUEST,
-        amount="20.23",
-        currency_code="KWD",
-        token="your-card-token",
-        agreement={"id": "agreement-123"}
-    )
-```
-
-### Async Payment Methods
-
-```python
-async with OttuAsync(
-    merchant_id="merchant.id.ottu.dev",
-    auth=APIKeyAuth("your-secret-api-key")
-) as ottu:
-    payment_methods = await ottu.get_payment_methods(
-        plugin="payment_request",
-        currencies=["KWD", "USD"]
-    )
+    session = await ottu.session.retrieve(session_id="...")
+    await ottu.session.capture(session_id="...")
 ```
 
 ### Error Handling
 
-Async operations raise the same exceptions as sync operations:
+Async operations follow the exact same error handling pattern as sync operations:
 
 ```python
-from ottu.exceptions import OttuHTTPException
-
 async with OttuAsync(
     merchant_id="merchant.id.ottu.dev",
     auth=APIKeyAuth("your-secret-api-key")
 ) as ottu:
-    try:
-        response = await ottu.checkout(
-            txn_type=TxnType.PAYMENT_REQUEST,
-            amount="20.23",
-            currency_code="KWD"
-        )
-    except OttuHTTPException as e:
-        print(f"Error: {e.status_code} - {e.detail}")
+    response = await ottu.checkout(
+        txn_type=TxnType.PAYMENT_REQUEST,
+        amount="20.23",
+        currency_code="KWD"
+    )
+    
+    if response.success:
+        print(f"Checkout successful: {response.response}")
+    else:
+        print(f"Checkout failed: {response.error}")
 ```
+
+### Framework Integration
+
+This async implementation works seamlessly with:
+- **FastAPI**: Native async/await support
+- **Django**: Using Django's async views  
+- **aiohttp**: Direct integration
+- **Any async framework**: Standard async/await pattern
 
 ### Design Principles
 
-- **Minimal Code Duplication**: Async classes inherit from base classes where possible
-- **Consistent API**: Async methods have identical signatures to sync methods
-- **Context Manager Support**: `OttuAsync` supports `async with` for automatic cleanup
-- **Shared Logic**: Request handling, response parsing, and business logic are shared between sync and async implementations
+- **100% Behavioral Consistency**: Uses the same underlying sync code wrapped with `sync_to_async`
+- **Zero Code Duplication**: No separate async implementation to maintain
+- **Standard Patterns**: Uses Django's proven `sync_to_async` approach
+- **Framework Agnostic**: Works with any async Python framework
 
 ## Django Integration
 

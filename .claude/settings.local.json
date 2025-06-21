@@ -10,7 +10,10 @@
       "Bash(isort:*)",
       "Bash(bash pre-commit:*)",
       "Bash(mypy:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(grep:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
