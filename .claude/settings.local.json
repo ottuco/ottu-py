@@ -13,7 +13,10 @@
       "Bash(git add:*)",
       "WebFetch(domain:github.com)",
       "Bash(grep:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(flake8:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   }

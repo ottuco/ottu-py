@@ -41,13 +41,15 @@ dependencies = [
 
 [project.optional-dependencies]
 django = [
-    "django<4.3"
+    "django<4.3",
+    "asgiref>=3.6.0"
 ]
-async = [
+fastapi = [
+    "fastapi",
     "asgiref>=3.6.0"
 ]
 all = [
-    "ottu-py[django,async]"
+    "ottu-py[django,fastapi]"
 ]
 
 # for test/dev purposes

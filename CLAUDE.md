@@ -146,10 +146,10 @@ async def main():
             customer_phone="+96550000000",
             order_no="1234567890",
         )
-        
+
         # Use cards
         cards = await ottu.cards.list()
-        
+
         # Session operations
         await ottu.session.capture(session_id="session-123")
 ```

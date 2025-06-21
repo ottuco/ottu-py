@@ -2,10 +2,7 @@ import pytest
 
 from ottu import OttuAsync
 from ottu.enums import TxnType
-from tests.test_ottu.test_ottu.mixins import (
-    OttuAutoDebitMixin,
-    OttuCheckoutMixin,
-)
+from tests.test_ottu.test_ottu.mixins import OttuAutoDebitMixin, OttuCheckoutMixin
 
 
 class TestOttuAsyncAutoDebit(OttuAutoDebitMixin):
@@ -16,8 +13,9 @@ class TestOttuAsyncAutoDebit(OttuAutoDebitMixin):
 
     def get_method(self, instance: OttuAsync):
         return instance.auto_debit
-    
-    # Skip signature test for async - decorator changes signature but behavior is identical
+
+    # Skip signature test for async - decorator changes signature but behavior
+    # is identical
     def test_auto_debit_signature(self, signature_info_auto_debit):
         pytest.skip("Signature test not relevant for sync_to_async wrapper")
 
@@ -84,8 +82,9 @@ class TestOttuAsyncCheckout(OttuCheckoutMixin):
 
     def get_method(self, instance: OttuAsync):
         return instance.checkout
-    
-    # Skip signature test for async - decorator changes signature but behavior is identical  
+
+    # Skip signature test for async - decorator changes signature but behavior
+    # is identical
     def test_checkout_signature(self, signature_info_checkout):
         pytest.skip("Signature test not relevant for sync_to_async wrapper")
 
@@ -130,9 +129,9 @@ class TestOttuAsyncCore:
     async def test_property_proxying(self, auth_api_key):
         """Test that properties are correctly proxied to sync instance."""
         async with OttuAsync(
-            merchant_id="test.ottu.dev", 
+            merchant_id="test.ottu.dev",
             auth=auth_api_key,
-            customer_id="test-customer"
+            customer_id="test-customer",
         ) as ottu:
             assert ottu.merchant_id == "test.ottu.dev"
             assert ottu.customer_id == "test-customer"
@@ -143,24 +142,24 @@ class TestOttuAsyncCore:
         """Test that session wrapper works correctly."""
         async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
             session = ottu.session
-            assert hasattr(session, 'create')
-            assert hasattr(session, 'retrieve')
-            assert hasattr(session, 'capture')
+            assert hasattr(session, "create")
+            assert hasattr(session, "retrieve")
+            assert hasattr(session, "capture")
             # Properties should be accessible
             assert session.session_id is None  # No session created yet
 
     @pytest.mark.asyncio
     async def test_cards_wrapper(self, auth_api_key):
-        """Test that cards wrapper works correctly.""" 
+        """Test that cards wrapper works correctly."""
         async with OttuAsync(
             merchant_id="test.ottu.dev",
             auth=auth_api_key,
-            customer_id="test-customer"
+            customer_id="test-customer",
         ) as ottu:
             cards = ottu.cards
-            assert hasattr(cards, 'list')
-            assert hasattr(cards, 'get')
-            assert hasattr(cards, 'delete')
+            assert hasattr(cards, "list")
+            assert hasattr(cards, "get")
+            assert hasattr(cards, "delete")
             assert "AsyncCard(test-customer)" in str(cards)
 
     @pytest.mark.asyncio
@@ -211,9 +210,9 @@ class TestOttuAsyncCards:
             json=response_user_cards,
         )
         async with OttuAsync(
-            merchant_id="test.ottu.dev", 
+            merchant_id="test.ottu.dev",
             auth=auth_api_key,
-            customer_id="test-customer"
+            customer_id="test-customer",
         ) as ottu:
             response = await ottu.cards.list()
             assert response["success"] is True
@@ -228,9 +227,9 @@ class TestOttuAsyncCards:
             json=response_user_cards,
         )
         async with OttuAsync(
-            merchant_id="test.ottu.dev", 
+            merchant_id="test.ottu.dev",
             auth=auth_api_key,
-            customer_id="test-customer"
+            customer_id="test-customer",
         ) as ottu:
             card = await ottu.cards.get()
             if response_user_cards:
@@ -242,15 +241,16 @@ class TestOttuAsyncCards:
     async def test_cards_delete(self, httpx_mock, auth_api_key):
         """Test async cards delete functionality."""
         httpx_mock.add_response(
-            url="https://test.ottu.dev/b/pbl/v2/card/test-token/?customer_id=test-customer&type=sandbox",
+            url="https://test.ottu.dev/b/pbl/v2/card/test-token/"
+                "?customer_id=test-customer&type=sandbox",
             method="DELETE",
             status_code=204,
             json={},
         )
         async with OttuAsync(
-            merchant_id="test.ottu.dev", 
+            merchant_id="test.ottu.dev",
             auth=auth_api_key,
-            customer_id="test-customer"
+            customer_id="test-customer",
         ) as ottu:
             response = await ottu.cards.delete(token="test-token")
             assert response["success"] is True
@@ -303,5 +303,3 @@ class TestOttuAsyncSession:
         async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
             response = await ottu.session.capture(session_id="test-session")
             assert response["success"] is True
-
-

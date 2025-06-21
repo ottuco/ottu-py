@@ -142,5 +142,3 @@ class RequestResponseHandler(BaseRequestResponseHandler):
         response = self._process()
         self._log_response(response)
         return response
-
-

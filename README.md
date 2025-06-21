@@ -8,13 +8,19 @@
 pip install ottu-py
 ```
 
-For Django integration, use the following command.
+For Django integration (includes async support):
 
 ```bash
 pip install ottu-py[django]
 ```
 
-The SDK supports both synchronous and asynchronous operations out of the box. For async usage, install with `pip install 'ottu-py[async]'` and see the [Async Support](#async-support) section.
+For FastAPI integration (includes async support):
+
+```bash
+pip install ottu-py[fastapi]
+```
+
+The SDK supports both synchronous and asynchronous operations out of the box.
 
 # APIs
 
@@ -504,13 +510,7 @@ The SDK provides full asynchronous support through the `OttuAsync` class using D
 
 ### Installation
 
-To use async features, install the async extra:
-
-```bash
-pip install 'ottu-py[async]'
-```
-
-This will install `asgiref` which provides the `sync_to_async` functionality.
+Async support is automatically included with Django and FastAPI extras. No additional installation needed.
 
 ### Basic Async Usage
 
@@ -583,7 +583,7 @@ async with OttuAsync(
         amount="20.23",
         currency_code="KWD"
     )
-    
+
     if response.success:
         print(f"Checkout successful: {response.response}")
     else:
@@ -593,9 +593,9 @@ async with OttuAsync(
 ### Framework Integration
 
 This async implementation works seamlessly with:
-- **FastAPI**: Native async/await support
-- **Django**: Using Django's async views  
-- **aiohttp**: Direct integration
+- **FastAPI**: Install with `pip install ottu-py[fastapi]` for native async/await support
+- **Django**: Install with `pip install ottu-py[django]` for Django's async views
+- **aiohttp**: Works out of the box with base installation
 - **Any async framework**: Standard async/await pattern
 
 ### Design Principles
