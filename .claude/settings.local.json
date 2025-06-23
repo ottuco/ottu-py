@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(python:*)",
+      "Bash(pip install:*)",
+      "Bash(source:*)",
+      "Bash(black:*)",
+      "Bash(isort:*)",
+      "Bash(bash pre-commit:*)",
+      "Bash(mypy:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(grep:*)",
+      "Bash(rm:*)",
+      "Bash(pre-commit run:*)",
+      "Bash(flake8:*)",
+      "Bash(sed:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ],
+    "deny": []
+  }
+}

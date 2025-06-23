@@ -10,3 +10,4 @@ exclude =
     .git
     build/
     *.egg-info
+    example_async.py

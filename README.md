@@ -8,11 +8,19 @@
 pip install ottu-py
 ```
 
-For Django integration, use the following command.
+For Django integration (includes async support):
 
 ```bash
 pip install ottu-py[django]
 ```
+
+For async support without Django:
+
+```bash
+pip install ottu-py[async]
+```
+
+The SDK supports both synchronous and asynchronous operations out of the box.
 
 # APIs
 
@@ -495,6 +503,113 @@ response = ottu.auto_debit_autoflow(
 )
 print(response)
 ```
+
+## Async Support
+
+The SDK provides full asynchronous support through the `OttuAsync` class using `asgiref.sync.sync_to_async` wrapper. This ensures 100% identical behavior between sync and async versions while providing proper async/await support.
+
+### Installation
+
+For async support, install with the async extra:
+
+```bash
+pip install 'ottu-py[async]'
+```
+
+Async support is also automatically included with Django extra.
+
+### Basic Async Usage
+
+```python
+from ottu import OttuAsync
+from ottu.auth import APIKeyAuth
+from ottu.enums import TxnType
+
+async def main():
+    async with OttuAsync(
+        merchant_id="merchant.id.ottu.dev",
+        auth=APIKeyAuth("your-secret-api-key"),
+        is_sandbox=True
+    ) as ottu:
+        # Create checkout session
+        response = await ottu.checkout(
+            txn_type=TxnType.PAYMENT_REQUEST,
+            amount="20.23",
+            currency_code="KWD",
+            pg_codes=["mpgs", "ottu_pg"],
+            customer_phone="+96550000000",
+            order_no="1234567890",
+        )
+        print(response)
+
+import asyncio
+asyncio.run(main())
+```
+
+### Async Context Manager
+
+Always use `async with` when working with `OttuAsync` to ensure proper cleanup:
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    # All operations here
+    pass
+```
+
+### Identical API
+
+Since `OttuAsync` wraps the sync implementation with `sync_to_async`, all methods have identical signatures and behavior:
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    # All sync methods are available as async
+    response = await ottu.checkout(...)
+    cards = await ottu.cards.list()
+    session = await ottu.session.retrieve(session_id="...")
+    await ottu.session.capture(session_id="...")
+```
+
+### Error Handling
+
+Async operations follow the exact same error handling pattern as sync operations:
+
+```python
+async with OttuAsync(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key")
+) as ottu:
+    response = await ottu.checkout(
+        txn_type=TxnType.PAYMENT_REQUEST,
+        amount="20.23",
+        currency_code="KWD"
+    )
+
+    if response.success:
+        print(f"Checkout successful: {response.response}")
+    else:
+        print(f"Checkout failed: {response.error}")
+```
+
+### Framework Integration
+
+This async implementation works seamlessly with:
+- **FastAPI**: Install with `pip install ottu-py[async]` for native async/await support
+- **Django**: Install with `pip install ottu-py[django]` for Django's async views (includes async support)
+- **aiohttp**: Install with `pip install ottu-py[async]` for async support
+- **Any async framework**: Standard async/await pattern with `pip install ottu-py[async]`
+
+### Design Principles
+
+- **100% Behavioral Consistency**: Uses the same underlying sync code wrapped with `sync_to_async`
+- **Zero Code Duplication**: No separate async implementation to maintain
+- **Standard Patterns**: Uses Django's proven `sync_to_async` approach
+- **Framework Agnostic**: Works with any async Python framework
 
 ## Django Integration
 
