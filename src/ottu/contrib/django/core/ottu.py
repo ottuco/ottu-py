@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import import_string
 

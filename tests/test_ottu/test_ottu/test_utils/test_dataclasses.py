@@ -10,7 +10,7 @@ from ottu.utils.dataclasses import dynamic_asdict, dynamic_dataclass
 class OpenPerson:
     name: str
     age: int
-    address: typing.Optional[str] = None
+    address: str | None = None
 
 
 @dynamic_dataclass
@@ -18,7 +18,7 @@ class OpenPerson:
 class HybridPerson:
     name: str
     age: int
-    address: typing.Optional[str] = None
+    address: str | None = None
 
 
 class TestDynamicDataClass:

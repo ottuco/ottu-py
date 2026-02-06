@@ -37,8 +37,8 @@ async def main():
             order_no="ORDER-12345",
         )
         print(f"   Success: {response.get('success', False)}")
-        if not response.get('success'):
-            error_detail = response.get('error', {}).get('detail', 'Unknown error')
+        if not response.get("success"):
+            error_detail = response.get("error", {}).get("detail", "Unknown error")
             print(f"   Error (expected with demo credentials): {error_detail}")
 
         # Example 2: Get payment methods
@@ -48,8 +48,10 @@ async def main():
             currencies=["USD", "EUR"],
         )
         print(f"   Success: {payment_methods.get('success', False)}")
-        if not payment_methods.get('success'):
-            error_detail = payment_methods.get('error', {}).get('detail', 'Unknown error')
+        if not payment_methods.get("success"):
+            error_detail = payment_methods.get("error", {}).get(
+                "detail", "Unknown error"
+            )
             print(f"   Error (expected with demo credentials): {error_detail}")
 
         # Example 3: Card operations
@@ -67,8 +69,10 @@ async def main():
         print(f"   Session instance: {session}")
 
         # Session operations - will return error response with demo credentials
-        if response.get('response', {}).get('session_id'):
-            session_data = await session.retrieve(session_id=response['response']['session_id'])
+        if response.get("response", {}).get("session_id"):
+            session_data = await session.retrieve(
+                session_id=response["response"]["session_id"]
+            )
             print(f"   Session retrieve success: {session_data.get('success', False)}")
         else:
             print("   No session ID available from checkout response")
@@ -81,4 +85,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

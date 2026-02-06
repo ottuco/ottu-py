@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from functools import wraps
+from types import TracebackType
 
 try:
     from asgiref.sync import sync_to_async
@@ -36,7 +39,12 @@ class OttuAsync:
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> bool | None:
         """Async context manager exit."""
         # Close the underlying httpx client if it has an aclose method
         if hasattr(self._ottu.request_session, "aclose"):

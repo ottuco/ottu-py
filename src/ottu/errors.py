@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .mixins import ResponseMixin
 
 
@@ -17,13 +19,10 @@ class APIInterruptError(ResponseMixin, OttuBaseError):
         return str(self.error)
 
 
-class ConfigurationError(OttuBaseError):
-    ...
+class ConfigurationError(OttuBaseError): ...
 
 
-class ValidationError(OttuBaseError):
-    ...
+class ValidationError(OttuBaseError): ...
 
 
-class WebhookProcessingError(OttuBaseError):
-    ...
+class WebhookProcessingError(OttuBaseError): ...

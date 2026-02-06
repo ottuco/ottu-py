@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import Any
+
 from .utils.dataclasses import dynamic_asdict
 
 
@@ -7,8 +11,8 @@ class ResponseMixin:
         success: bool,
         status_code: int,
         endpoint: str,
-        response: dict,
-        error: dict,
+        response: dict[str, Any],
+        error: dict[str, Any],
     ):
         self.success = success
         self.status_code = status_code

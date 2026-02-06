@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import typing
 from json import JSONDecodeError
@@ -10,8 +12,7 @@ from .mixins import ResponseMixin
 logger = logging.getLogger("ottu-py")
 
 
-class OttuPYResponse(ResponseMixin):
-    ...
+class OttuPYResponse(ResponseMixin): ...
 
 
 class BaseRequestResponseHandler:
@@ -19,7 +20,7 @@ class BaseRequestResponseHandler:
 
     def __init__(
         self,
-        session: typing.Union[httpx.Client, httpx.AsyncClient],
+        session: httpx.Client | httpx.AsyncClient,
         method: str,
         url: str,
         **kwargs,

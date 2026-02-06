@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import typing
 
@@ -17,17 +19,17 @@ logger = logging.getLogger("ottu-py")
 
 @dynamic_dataclass
 class PaymentMethod(AsDictMixin):
-    code: typing.Optional[str] = None
-    name: typing.Optional[str] = None
-    pg: typing.Optional[str] = None
-    type: typing.Optional[str] = None
-    amount: typing.Optional[str] = None
-    currency_code: typing.Optional[str] = None
-    fee: typing.Optional[str] = None
-    fee_description: typing.Optional[str] = None
-    icon: typing.Optional[str] = None
-    flow: typing.Optional[str] = None
-    redirect_url: typing.Optional[str] = None
+    code: str | None = None
+    name: str | None = None
+    pg: str | None = None
+    type: str | None = None
+    amount: str | None = None
+    currency_code: str | None = None
+    fee: str | None = None
+    fee_description: str | None = None
+    icon: str | None = None
+    flow: str | None = None
+    redirect_url: str | None = None
 
     def __repr__(self):
         return f"PaymentMethod({self.code or '######'})"
@@ -38,40 +40,40 @@ class Session:
     url_ops = "/b/pbl/v2/operation/"
     url_auto_debit = "/b/pbl/v2/auto-debit/"
 
-    amount: typing.Optional[str] = None
-    attachment: typing.Optional[str] = None
-    attachment_short_url: typing.Optional[str] = None
-    billing_address: typing.Optional[dict] = None
-    checkout_short_url: typing.Optional[str] = None
-    checkout_url: typing.Optional[str] = None
-    currency_code: typing.Optional[str] = None
-    customer_email: typing.Optional[str] = None
-    customer_first_name: typing.Optional[str] = None
-    customer_last_name: typing.Optional[str] = None
-    customer_id: typing.Optional[str] = None
-    customer_phone: typing.Optional[str] = None
-    due_datetime: typing.Optional[str] = None
-    email_recipients: typing.Optional[list[str]] = None
-    expiration_time: typing.Optional[str] = None
-    extra: typing.Optional[dict] = None
-    initiator_id: typing.Optional[int] = None
-    language: typing.Optional[str] = None
-    mode: typing.Optional[str] = None
-    notifications: typing.Optional[dict] = None
-    operation: typing.Optional[str] = None
-    order_no: typing.Optional[str] = None
-    payment_methods: typing.Optional[list[PaymentMethod]] = None
-    pg_codes: typing.Optional[list[str]] = None
-    qr_code_url: typing.Optional[str] = None
-    redirect_url: typing.Optional[str] = None
-    session_id: typing.Optional[str] = None
-    shipping_address: typing.Optional[dict] = None
-    state: typing.Optional[str] = None
-    type: typing.Optional[str] = None
-    vendor_name: typing.Optional[str] = None
-    webhook_url: typing.Optional[str] = None
+    amount: str | None = None
+    attachment: str | None = None
+    attachment_short_url: str | None = None
+    billing_address: dict | None = None
+    checkout_short_url: str | None = None
+    checkout_url: str | None = None
+    currency_code: str | None = None
+    customer_email: str | None = None
+    customer_first_name: str | None = None
+    customer_last_name: str | None = None
+    customer_id: str | None = None
+    customer_phone: str | None = None
+    due_datetime: str | None = None
+    email_recipients: list[str] | None = None
+    expiration_time: str | None = None
+    extra: dict | None = None
+    initiator_id: int | None = None
+    language: str | None = None
+    mode: str | None = None
+    notifications: dict | None = None
+    operation: str | None = None
+    order_no: str | None = None
+    payment_methods: list[PaymentMethod] | None = None
+    pg_codes: list[str] | None = None
+    qr_code_url: str | None = None
+    redirect_url: str | None = None
+    session_id: str | None = None
+    shipping_address: dict | None = None
+    state: str | None = None
+    type: str | None = None
+    vendor_name: str | None = None
+    webhook_url: str | None = None
 
-    def __init__(self, ottu: "Ottu", **data):
+    def __init__(self, ottu: Ottu, **data):
         self.ottu = ottu
         for field, value in data.items():
             setattr(self, field, value)
@@ -130,7 +132,7 @@ class Session:
             {field: getattr(self, field, "") for field in fields},
         )
 
-    def __path_to_file(self, path: str) -> typing.Tuple[str, bytes]:
+    def __path_to_file(self, path: str) -> tuple[str, bytes]:
         with open(path, "rb") as f:
             content = f.read()
             name = f.name or "attachment.pdf"
@@ -144,32 +146,32 @@ class Session:
         currency_code: str,
         pg_codes: list[str],
         payment_type: str = "one_off",
-        customer_id: typing.Optional[str] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        agreement: typing.Optional[dict] = None,
-        card_acceptance_criteria: typing.Optional[dict] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
-        include_sdk_setup_preload: typing.Optional[bool] = None,
+        customer_id: str | None = None,
+        customer_email: str | None = None,
+        customer_phone: str | None = None,
+        customer_first_name: str | None = None,
+        customer_last_name: str | None = None,
+        agreement: dict | None = None,
+        card_acceptance_criteria: dict | None = None,
+        attachment: str | None = None,
+        billing_address: dict | None = None,
+        due_datetime: str | None = None,
+        email_recipients: list[str] | None = None,
+        expiration_time: str | None = None,
+        extra: dict | None = None,
+        generate_qr_code: bool | None = None,
+        language: str | None = None,
+        mode: str | None = None,
+        notifications: dict | None = None,
+        order_no: str | None = None,
+        product_type: str | None = None,
+        redirect_url: str | None = None,
+        shopping_address: dict | None = None,
+        shortify_attachment_url: bool | None = None,
+        shortify_checkout_url: bool | None = None,
+        vendor_name: str | None = None,
+        webhook_url: str | None = None,
+        include_sdk_setup_preload: bool | None = None,
         **kwargs,
     ) -> dict:
         """
@@ -288,7 +290,7 @@ class Session:
             self.ottu._update_session(session)
         return ottu_py_response.as_dict()
 
-    def refresh(self, session_id: typing.Optional[str] = None) -> typing.Optional[dict]:
+    def refresh(self, session_id: str | None = None) -> dict | None:
         """
         Reloads the payment attributes from upstream by calling the `retrieve` method.
         """
@@ -302,32 +304,32 @@ class Session:
     def update(
         self,
         *,
-        amount: typing.Optional[str] = None,
-        currency_code: typing.Optional[str] = None,
-        pg_codes: typing.Optional[list[str]] = None,
-        customer_id: typing.Optional[str] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
+        amount: str | None = None,
+        currency_code: str | None = None,
+        pg_codes: list[str] | None = None,
+        customer_id: str | None = None,
+        customer_email: str | None = None,
+        customer_phone: str | None = None,
+        customer_first_name: str | None = None,
+        customer_last_name: str | None = None,
+        attachment: str | None = None,
+        billing_address: dict | None = None,
+        due_datetime: str | None = None,
+        email_recipients: list[str] | None = None,
+        expiration_time: str | None = None,
+        extra: dict | None = None,
+        generate_qr_code: bool | None = None,
+        language: str | None = None,
+        mode: str | None = None,
+        notifications: dict | None = None,
+        order_no: str | None = None,
+        product_type: str | None = None,
+        redirect_url: str | None = None,
+        shopping_address: dict | None = None,
+        shortify_attachment_url: bool | None = None,
+        shortify_checkout_url: bool | None = None,
+        vendor_name: str | None = None,
+        webhook_url: str | None = None,
         **kwargs,
     ) -> dict:
         payload = {
@@ -393,10 +395,10 @@ class Session:
     def ops(
         self,
         operation: str,
-        order_id: typing.Optional[str] = None,
-        session_id: typing.Optional[str] = None,
-        amount: typing.Optional[str] = None,
-        headers: typing.Optional[dict] = None,
+        order_id: str | None = None,
+        session_id: str | None = None,
+        amount: str | None = None,
+        headers: dict | None = None,
     ) -> OttuPYResponse:
         if session_id is None:
             session_id = self.session_id
@@ -420,8 +422,8 @@ class Session:
 
     def cancel(
         self,
-        order_id: typing.Optional[str] = None,
-        session_id: typing.Optional[str] = None,
+        order_id: str | None = None,
+        session_id: str | None = None,
     ) -> dict:
         ottu_py_response = self.ops(
             operation="cancel",
@@ -434,8 +436,8 @@ class Session:
 
     def expire(
         self,
-        order_id: typing.Optional[str] = None,
-        session_id: typing.Optional[str] = None,
+        order_id: str | None = None,
+        session_id: str | None = None,
     ) -> dict:
         ottu_py_response = self.ops(
             operation="expire",
@@ -448,8 +450,8 @@ class Session:
 
     def delete(
         self,
-        order_id: typing.Optional[str] = None,
-        session_id: typing.Optional[str] = None,
+        order_id: str | None = None,
+        session_id: str | None = None,
     ) -> dict:
         ottu_py_response = self.ops(
             operation="delete",
@@ -460,10 +462,10 @@ class Session:
 
     def capture(
         self,
-        order_id: typing.Optional[str] = None,
-        session_id: typing.Optional[str] = None,
-        amount: typing.Optional[str] = None,
-        tracking_key: typing.Optional[str] = None,
+        order_id: str | None = None,
+        session_id: str | None = None,
+        amount: str | None = None,
+        tracking_key: str | None = None,
     ) -> dict:
         headers = None
         if tracking_key:
@@ -483,10 +485,10 @@ class Session:
 
     def refund(
         self,
-        order_id: typing.Optional[str] = None,
-        session_id: typing.Optional[str] = None,
-        amount: typing.Optional[str] = None,
-        tracking_key: typing.Optional[str] = None,
+        order_id: str | None = None,
+        session_id: str | None = None,
+        amount: str | None = None,
+        tracking_key: str | None = None,
     ) -> dict:
         headers = None
         if tracking_key:
@@ -506,9 +508,9 @@ class Session:
 
     def void(
         self,
-        order_id: typing.Optional[str] = None,
-        session_id: typing.Optional[str] = None,
-        tracking_key: typing.Optional[str] = None,
+        order_id: str | None = None,
+        session_id: str | None = None,
+        tracking_key: str | None = None,
     ) -> dict:
         headers = None
         if tracking_key:
@@ -566,33 +568,33 @@ class Session:
         amount: str,
         currency_code: str,
         payment_type: str = "one_off",
-        customer_id: typing.Optional[str] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        agreement: typing.Optional[dict] = None,
-        card_acceptance_criteria: typing.Optional[dict] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
-        include_sdk_setup_preload: typing.Optional[bool] = None,
-        checkout_extra_args: typing.Optional[dict] = None,
+        customer_id: str | None = None,
+        customer_email: str | None = None,
+        customer_phone: str | None = None,
+        customer_first_name: str | None = None,
+        customer_last_name: str | None = None,
+        agreement: dict | None = None,
+        card_acceptance_criteria: dict | None = None,
+        attachment: str | None = None,
+        billing_address: dict | None = None,
+        due_datetime: str | None = None,
+        email_recipients: list[str] | None = None,
+        expiration_time: str | None = None,
+        extra: dict | None = None,
+        generate_qr_code: bool | None = None,
+        language: str | None = None,
+        mode: str | None = None,
+        notifications: dict | None = None,
+        order_no: str | None = None,
+        product_type: str | None = None,
+        redirect_url: str | None = None,
+        shopping_address: dict | None = None,
+        shortify_attachment_url: bool | None = None,
+        shortify_checkout_url: bool | None = None,
+        vendor_name: str | None = None,
+        webhook_url: str | None = None,
+        include_sdk_setup_preload: bool | None = None,
+        checkout_extra_args: dict | None = None,
     ):
         pg_codes = self.get_pg_codes(plugin=txn_type, currency=currency_code)
         checkout_extra_args = checkout_extra_args or {}
@@ -640,33 +642,33 @@ class Session:
         currency_code: str,
         customer_id: str,
         agreement: dict,
-        pg_codes: typing.Optional[list[str]] = None,
-        customer_email: typing.Optional[str] = None,
-        customer_phone: typing.Optional[str] = None,
-        customer_first_name: typing.Optional[str] = None,
-        customer_last_name: typing.Optional[str] = None,
-        card_acceptance_criteria: typing.Optional[dict] = None,
-        attachment: typing.Optional[str] = None,
-        billing_address: typing.Optional[dict] = None,
-        due_datetime: typing.Optional[str] = None,
-        email_recipients: typing.Optional[list[str]] = None,
-        expiration_time: typing.Optional[str] = None,
-        extra: typing.Optional[dict] = None,
-        generate_qr_code: typing.Optional[bool] = None,
-        language: typing.Optional[str] = None,
-        mode: typing.Optional[str] = None,
-        notifications: typing.Optional[dict] = None,
-        order_no: typing.Optional[str] = None,
-        product_type: typing.Optional[str] = None,
-        redirect_url: typing.Optional[str] = None,
-        shopping_address: typing.Optional[dict] = None,
-        shortify_attachment_url: typing.Optional[bool] = None,
-        shortify_checkout_url: typing.Optional[bool] = None,
-        vendor_name: typing.Optional[str] = None,
-        webhook_url: typing.Optional[str] = None,
-        include_sdk_setup_preload: typing.Optional[bool] = None,
-        checkout_extra_args: typing.Optional[dict] = None,
-        token: typing.Optional[str] = None,
+        pg_codes: list[str] | None = None,
+        customer_email: str | None = None,
+        customer_phone: str | None = None,
+        customer_first_name: str | None = None,
+        customer_last_name: str | None = None,
+        card_acceptance_criteria: dict | None = None,
+        attachment: str | None = None,
+        billing_address: dict | None = None,
+        due_datetime: str | None = None,
+        email_recipients: list[str] | None = None,
+        expiration_time: str | None = None,
+        extra: dict | None = None,
+        generate_qr_code: bool | None = None,
+        language: str | None = None,
+        mode: str | None = None,
+        notifications: dict | None = None,
+        order_no: str | None = None,
+        product_type: str | None = None,
+        redirect_url: str | None = None,
+        shopping_address: dict | None = None,
+        shortify_attachment_url: bool | None = None,
+        shortify_checkout_url: bool | None = None,
+        vendor_name: str | None = None,
+        webhook_url: str | None = None,
+        include_sdk_setup_preload: bool | None = None,
+        checkout_extra_args: dict | None = None,
+        token: str | None = None,
     ):
         """
         Completes the auto debit flow by automatically

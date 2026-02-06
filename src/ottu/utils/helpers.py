@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def remove_empty_values(d: dict):
     """
     Removes empty values from a dictionary.
