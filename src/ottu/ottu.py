@@ -16,9 +16,7 @@ class Ottu:
     _card: typing.Optional[Card] = None
     default_timeout: int = 30
     session_cls: typing.Type[Session] = Session
-    request_response_handler: typing.Type[
-        RequestResponseHandler
-    ] = RequestResponseHandler
+    request_response_handler: typing.Type[RequestResponseHandler] = RequestResponseHandler
 
     def __init__(
         self,
@@ -320,13 +318,15 @@ class Ottu:
 
     def get_payment_methods(
         self,
-        plugin,
+        plugin: str | TxnType,
         currencies: typing.Optional[list[str]] = None,
         customer_id: typing.Optional[str] = None,
         operation: typing.Optional[str] = None,
         tokenizable: bool = False,
         pg_names: typing.Optional[list[str]] = None,
     ) -> dict:
+        if isinstance(plugin, TxnType):
+            plugin = plugin.value
         return self._get_payment_methods(
             plugin=plugin,
             currencies=currencies,
