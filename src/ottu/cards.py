@@ -74,7 +74,7 @@ class Card:
         )
         if ottu_py_response.success:
             try:
-                return ottu_py_response.response[0]
+                return ottu_py_response.response[0]  # type: ignore[index]
             except IndexError:
                 pass
         return None

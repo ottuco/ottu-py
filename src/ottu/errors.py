@@ -19,10 +19,13 @@ class APIInterruptError(ResponseMixin, OttuBaseError):
         return str(self.error)
 
 
-class ConfigurationError(OttuBaseError): ...
+class ConfigurationError(OttuBaseError):
+    pass
 
 
-class ValidationError(OttuBaseError): ...
+class ValidationError(OttuBaseError):
+    pass
 
 
-class WebhookProcessingError(OttuBaseError): ...
+class WebhookProcessingError(OttuBaseError):
+    pass

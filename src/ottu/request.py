@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import typing
 from json import JSONDecodeError
 from urllib.parse import urlparse
 
@@ -12,7 +11,8 @@ from .mixins import ResponseMixin
 logger = logging.getLogger("ottu-py")
 
 
-class OttuPYResponse(ResponseMixin): ...
+class OttuPYResponse(ResponseMixin):
+    pass
 
 
 class BaseRequestResponseHandler:
@@ -37,7 +37,7 @@ class BaseRequestResponseHandler:
         """
         return urlparse(self.url).path
 
-    def _process_response(self, response: httpx.Response) -> dict | list:
+    def _process_response(self, response: httpx.Response) -> dict:
         if response.status_code == 204:
             return {}
 

@@ -4,4 +4,4 @@
 
 pre-commit run -a
 mypy src/
-flake8 .
+flake8 src/
