@@ -52,7 +52,7 @@ class Card:
     def list(
         self,
         customer_id: str | None = None,
-        pg_codes: list[str] | None = None,
+        pg_codes: list[str] | None = None,  # type: ignore[valid-type]
         agreement_id: str | None = None,
     ) -> dict:
         return self.get_cards(
@@ -64,7 +64,7 @@ class Card:
     def get(
         self,
         customer_id: str | None = None,
-        pg_codes: list[str] | None = None,
+        pg_codes: list[str] | None = None,  # type: ignore[valid-type]
         agreement_id: str | None = None,
     ) -> dict | None:
         ottu_py_response = self._get_cards(

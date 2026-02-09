@@ -51,6 +51,7 @@ class OttuAsync:
             await self._ottu.request_session.aclose()
         elif hasattr(self._ottu.request_session, "close"):
             self._ottu.request_session.close()
+        return None
 
     # Proxy properties to underlying Ottu instance
     @property

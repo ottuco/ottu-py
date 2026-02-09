@@ -11,7 +11,7 @@ class ResponseMixin:
         success: bool,
         status_code: int,
         endpoint: str,
-        response: dict[str, Any],
+        response: dict[str, Any] | list[Any],
         error: dict[str, Any],
     ):
         self.success = success

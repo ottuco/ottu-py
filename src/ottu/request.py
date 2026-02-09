@@ -37,7 +37,7 @@ class BaseRequestResponseHandler:
         """
         return urlparse(self.url).path
 
-    def _process_response(self, response: httpx.Response) -> dict:
+    def _process_response(self, response: httpx.Response) -> dict | list:
         if response.status_code == 204:
             return {}
 
