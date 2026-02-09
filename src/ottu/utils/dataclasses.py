@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field, fields
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
 
-def dynamic_dataclass(cls: Type[T]) -> Type[T]:
+def dynamic_dataclass(cls: type[T]) -> type[T]:
     """
     A decorator that makes a dataclass accept dynamic fields.
 
@@ -24,7 +26,7 @@ def dynamic_dataclass(cls: Type[T]) -> Type[T]:
     # Initialize the _extra_fields as a class variable with a default factory
     # This fixes the type checking issue
     setattr(cls, "_extra_fields", field(default_factory=dict))
-    original_annotations["_extra_fields"] = Dict[str, Any]
+    original_annotations["_extra_fields"] = dict[str, Any]
 
     # Store the original __init__
     original_init = cls.__init__
@@ -72,7 +74,7 @@ def dynamic_dataclass(cls: Type[T]) -> Type[T]:
     return new_cls
 
 
-def dynamic_asdict(obj: Any) -> Dict[str, Any]:
+def dynamic_asdict(obj: Any) -> dict[str, Any]:
     """
     A function that returns the dataclass fields as a dictionary.
 

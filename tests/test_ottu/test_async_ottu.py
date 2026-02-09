@@ -242,7 +242,7 @@ class TestOttuAsyncCards:
         """Test async cards delete functionality."""
         httpx_mock.add_response(
             url="https://test.ottu.dev/b/pbl/v2/card/test-token/"
-                "?customer_id=test-customer&type=sandbox",
+            "?customer_id=test-customer&type=sandbox",
             method="DELETE",
             status_code=204,
             json={},

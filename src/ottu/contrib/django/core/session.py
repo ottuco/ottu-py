@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ....errors import APIInterruptError
 from ....session import Session as _Session
 from .. import conf

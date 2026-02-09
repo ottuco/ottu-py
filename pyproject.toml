@@ -1,7 +1,11 @@
 [tool.black]
 line_length = 88
 force_exclude = """
-        (.github/*)
+        (
+            .github/.*
+            | .venv/.*
+            | venv/.*
+        )
     """
 
 [tool.isort]
@@ -24,15 +28,16 @@ authors = [
 ]
 description = "Python bindings for the Ottu Checkout API"
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.10"
 classifiers = [
     "Environment :: Web Environment",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Utilities",
 ]
 dependencies = [

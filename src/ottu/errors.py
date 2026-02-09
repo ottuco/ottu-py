@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from .mixins import ResponseMixin
 
 
@@ -18,12 +20,12 @@ class APIInterruptError(ResponseMixin, OttuBaseError):
 
 
 class ConfigurationError(OttuBaseError):
-    ...
+    pass
 
 
 class ValidationError(OttuBaseError):
-    ...
+    pass
 
 
 class WebhookProcessingError(OttuBaseError):
-    ...
+    pass

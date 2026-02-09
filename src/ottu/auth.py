@@ -1,4 +1,4 @@
-import typing
+from __future__ import annotations
 
 import httpx
 from httpx import Auth, BasicAuth as _BasicAuth, Request
@@ -136,7 +136,7 @@ class KeycloakPasswordAuth(KeycloakAuthBase, Auth):
         username: str,
         password: str,
         client_id: str,
-        client_secret: typing.Optional[str] = None,
+        client_secret: str | None = None,
         *args,
         **kwargs,
     ):

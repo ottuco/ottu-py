@@ -1,5 +1,6 @@
+from __future__ import annotations
+
 import logging
-import typing
 from json import JSONDecodeError
 from urllib.parse import urlparse
 
@@ -11,7 +12,7 @@ logger = logging.getLogger("ottu-py")
 
 
 class OttuPYResponse(ResponseMixin):
-    ...
+    pass
 
 
 class BaseRequestResponseHandler:
@@ -19,7 +20,7 @@ class BaseRequestResponseHandler:
 
     def __init__(
         self,
-        session: typing.Union[httpx.Client, httpx.AsyncClient],
+        session: httpx.Client | httpx.AsyncClient,
         method: str,
         url: str,
         **kwargs,
