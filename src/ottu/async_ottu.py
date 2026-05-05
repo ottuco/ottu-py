@@ -171,8 +171,8 @@ class AsyncSessionWrapper:
         return self._session.delete(*args, **kwargs)
 
     @async_method
-    def inquiry(self, *args, **kwargs):
-        return self._session.inquiry(*args, **kwargs)
+    def psq(self, *args, **kwargs):
+        return self._session.psq(*args, **kwargs)
 
 
 class AsyncCardWrapper:
