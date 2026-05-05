@@ -531,3 +531,69 @@ class TestOps:
         with pytest.raises(ValidationError) as exc:
             method()
             assert exc.msg == "session_id or order_id is required"
+
+
+class TestSessionInquiry:
+    def test_inquiry_with_session_id(self, httpx_mock, auth_api_key):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/inquiry/",
+            method="POST",
+            match_json={"session_id": "abc123"},
+            status_code=200,
+            json={"session_id": "abc123", "state": "paid"},
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        response = ottu.session.inquiry(session_id="abc123")
+        assert response["success"] is True
+        assert response["status_code"] == 200
+        assert response["endpoint"] == "/b/pbl/v2/inquiry/"
+        assert response["response"] == {"session_id": "abc123", "state": "paid"}
+        assert response["error"] == {}
+
+    def test_inquiry_with_order_id(self, httpx_mock, auth_api_key):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/inquiry/",
+            method="POST",
+            match_json={"order_no": "ORD-001"},
+            status_code=200,
+            json={"session_id": "abc123", "state": "pending"},
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        response = ottu.session.inquiry(order_id="ORD-001")
+        assert response["success"] is True
+        assert response["response"]["state"] == "pending"
+
+    def test_inquiry_fallback_to_instance_session_id(self, httpx_mock, ottu_instance):
+        session_id = ottu_instance.session.session_id
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/inquiry/",
+            method="POST",
+            match_json={"session_id": session_id},
+            status_code=200,
+            json={"session_id": session_id, "state": "paid"},
+        )
+        response = ottu_instance.session.inquiry()
+        assert response["success"] is True
+        assert response["response"]["session_id"] == session_id
+
+    def test_inquiry_missing_both_raises_validation_error(self, auth_api_key):
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        with pytest.raises(ValidationError) as exc_info:
+            ottu.session.inquiry()
+        assert str(exc_info.value) == "session_id or order_id is required"
+
+    @pytest.mark.parametrize("status_code", [400, 500])
+    def test_inquiry_non_2xx(self, httpx_mock, auth_api_key, status_code):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/inquiry/",
+            method="POST",
+            match_json={"session_id": "abc123"},
+            status_code=status_code,
+            json={"detail": "error from upstream"},
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        response = ottu.session.inquiry(session_id="abc123")
+        assert response["success"] is False
+        assert response["status_code"] == status_code
+        assert response["error"] == {"detail": "error from upstream"}
+        assert response["response"] == {}

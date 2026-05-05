@@ -170,6 +170,10 @@ class AsyncSessionWrapper:
     def delete(self, *args, **kwargs):
         return self._session.delete(*args, **kwargs)
 
+    @async_method
+    def inquiry(self, *args, **kwargs):
+        return self._session.inquiry(*args, **kwargs)
+
 
 class AsyncCardWrapper:
     """Async wrapper for Card class."""

@@ -145,6 +145,7 @@ class TestOttuAsyncCore:
             assert hasattr(session, "create")
             assert hasattr(session, "retrieve")
             assert hasattr(session, "capture")
+            assert hasattr(session, "inquiry")
             # Properties should be accessible
             assert session.session_id is None  # No session created yet
 
@@ -354,3 +355,39 @@ class TestOttuAsyncSession:
         async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
             response = await ottu.session.expire(session_id="test-session")
             assert response["success"] is True
+
+
+class TestAsyncSessionInquiry:
+    @pytest.mark.asyncio
+    async def test_inquiry_200(self, httpx_mock, auth_api_key):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/inquiry/",
+            method="POST",
+            match_json={"session_id": "abc123"},
+            status_code=200,
+            json={"session_id": "abc123", "state": "paid"},
+        )
+        async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
+            response = await ottu.session.inquiry(session_id="abc123")
+        assert response["success"] is True
+        assert response["status_code"] == 200
+        assert response["endpoint"] == "/b/pbl/v2/inquiry/"
+        assert response["response"] == {"session_id": "abc123", "state": "paid"}
+        assert response["error"] == {}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status_code", [400, 500])
+    async def test_inquiry_non_200(self, httpx_mock, auth_api_key, status_code):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/b/pbl/v2/inquiry/",
+            method="POST",
+            match_json={"session_id": "abc123"},
+            status_code=status_code,
+            json={"detail": "error from upstream"},
+        )
+        async with OttuAsync(merchant_id="test.ottu.dev", auth=auth_api_key) as ottu:
+            response = await ottu.session.inquiry(session_id="abc123")
+        assert response["success"] is False
+        assert response["status_code"] == status_code
+        assert response["error"] == {"detail": "error from upstream"}
+        assert response["response"] == {}
