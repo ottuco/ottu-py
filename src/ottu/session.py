@@ -39,6 +39,7 @@ class Session:
     url_session_create = "/b/checkout/v1/pymt-txn/"
     url_ops = "/b/pbl/v2/operation/"
     url_auto_debit = "/b/pbl/v2/auto-debit/"
+    url_payment_status_query = "/b/pbl/v2/inquiry/"
 
     amount: str | None = None
     attachment: str | None = None
@@ -525,6 +526,23 @@ class Session:
         )
         if ottu_py_response.success:
             self.refresh()
+        return ottu_py_response.as_dict()
+
+    def psq(
+        self,
+        session_id: str | None = None,
+        order_id: str | None = None,
+    ) -> dict:
+        if session_id is None:
+            session_id = self.session_id
+        if not session_id and not order_id:
+            raise ValidationError("session_id or order_id is required")
+        payload = remove_empty_values({"session_id": session_id, "order_no": order_id})
+        ottu_py_response = self.ottu.send_request(
+            path=self.url_payment_status_query,
+            method=HTTPMethod.POST,
+            json=payload,
+        )
         return ottu_py_response.as_dict()
 
     def get_pg_codes(self, plugin, currency, tokenizable=False) -> list:
