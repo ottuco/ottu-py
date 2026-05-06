@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.9.0 — May 6, 2026
+
+- Feature #153453: Add Payment Status Query (PSQ) support — POST /b/pbl/v2/inquiry/
+
+---
+
 ## [Dev]
 
 ## [1.7.0] - 2025-06-23
