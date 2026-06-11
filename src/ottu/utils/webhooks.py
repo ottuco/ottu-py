@@ -47,6 +47,14 @@ _SUBSCRIPTION_SIGNED_FIELDS = sorted(
 _MISSING = object()
 
 
+def _hmac_digest(message: str, key: str) -> str:
+    return hmac.new(
+        key.encode("utf8"),
+        message.encode("utf8"),
+        digestmod=hashlib.sha256,
+    ).hexdigest()
+
+
 def _resolve_path(payload: dict, path: str) -> object:
     current: object = payload
     for part in path.split("."):
@@ -77,14 +85,10 @@ def calculate_hmac_signature(payload: dict, hmac_key: str) -> str:
     parts = [
         f"{k}{payload[k]}"
         for k in sorted(_SIGNED_FIELDS)
-        if k in payload and payload[k]
+        if k in payload and payload[k] is not None and payload[k] != ""
     ]
     message = "".join(parts)
-    return hmac.new(
-        bytes(hmac_key, encoding="utf8"),
-        bytes(message, encoding="utf8"),
-        digestmod=hashlib.sha256,
-    ).hexdigest()
+    return _hmac_digest(message, hmac_key)
 
 
 def calculate_subscription_hmac_signature(payload: dict, hmac_key: str) -> str:
@@ -92,14 +96,10 @@ def calculate_subscription_hmac_signature(payload: dict, hmac_key: str) -> str:
     # (token.*, agreement.id, extra.*). ``path=value`` joined by ``\n``.
     # Used by Connect feat/153560+ for autopay webhook verification.
     parts: list[str] = []
-    for path in sorted(_SUBSCRIPTION_SIGNED_FIELDS):
+    for path in _SUBSCRIPTION_SIGNED_FIELDS:
         value = _resolve_path(payload, path)
-        if value is _MISSING or not value:
+        if value is _MISSING or value is None or value == "":
             continue
         parts.append(f"{path}={value}")
     message = "\n".join(parts)
-    return hmac.new(
-        bytes(hmac_key, encoding="utf8"),
-        bytes(message, encoding="utf8"),
-        digestmod=hashlib.sha256,
-    ).hexdigest()
+    return _hmac_digest(message, hmac_key)

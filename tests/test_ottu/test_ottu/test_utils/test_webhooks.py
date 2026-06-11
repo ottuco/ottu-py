@@ -243,7 +243,7 @@ class TestResolvePath:
 
     def test_present_null_is_returned_not_missing(self):
         # Resolution returns the real value (None); calculate_subscription_hmac_signature
-        # drops it because None is falsy.
+        # drops it via the explicit `value is None` guard.
         assert _resolve_path({"token": {"token": None}}, "token.token") is None
 
 
@@ -267,6 +267,22 @@ class TestStandardSignature:
             {k: v for k, v in _STD_PAYLOAD.items() if k != "state"}, KEY
         )
         assert with_empty == without_state
+
+    def test_zero_string_not_skipped(self):
+        # "0" is a valid non-empty string — must be included, not treated as absent.
+        with_zero = calculate_hmac_signature({**_STD_PAYLOAD, "amount": "0"}, KEY)
+        without_amount = calculate_hmac_signature(
+            {k: v for k, v in _STD_PAYLOAD.items() if k != "amount"}, KEY
+        )
+        assert with_zero != without_amount
+
+    def test_null_field_skipped(self):
+        # None is treated as absent — same result as the field not being in the payload.
+        with_null = calculate_hmac_signature({**_STD_PAYLOAD, "state": None}, KEY)
+        without_state = calculate_hmac_signature(
+            {k: v for k, v in _STD_PAYLOAD.items() if k != "state"}, KEY
+        )
+        assert with_null == without_state
 
     def test_missing_fields_produce_empty_message(self):
         assert calculate_hmac_signature({}, KEY) == _digest("")
@@ -304,6 +320,12 @@ class TestSubscriptionSkipBehavior:
         without = calculate_subscription_hmac_signature({"amount": "1.000"}, KEY)
         assert with_empty == without
 
+    def test_zero_string_not_skipped(self):
+        # "0" is a valid non-empty string — must be included, not treated as absent.
+        with_zero = calculate_subscription_hmac_signature({"amount": "0"}, KEY)
+        without_amount = calculate_subscription_hmac_signature({}, KEY)
+        assert with_zero != without_amount
+
     def test_unsigned_nested_keys_excluded(self):
         # token.brand is present but unsigned; it must not enter the message.
         assert calculate_subscription_hmac_signature(
@@ -325,6 +347,14 @@ class TestSubscriptionTamperFields:
         original = calculate_subscription_hmac_signature(base, KEY)
         emptied = _set_path(base, path, "")
         assert calculate_subscription_hmac_signature(emptied, KEY) != original
+
+    @pytest.mark.parametrize("path", SUBSCRIPTION_ONLY_PATHS)
+    def test_nulling_breaks_signature(self, path):
+        # None is treated as absent — removes the field from the message, breaking the signature.
+        base = _full_subscription_payload()
+        original = calculate_subscription_hmac_signature(base, KEY)
+        nulled = _set_path(base, path, None)
+        assert calculate_subscription_hmac_signature(nulled, KEY) != original
 
 
 class TestSubscriptionUnsignedFields:
