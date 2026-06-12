@@ -163,3 +163,7 @@ Pipfile*
 
 local_*/
 *.pdf
+
+# Local development / incident docs (not part of the SDK)
+docs/
+.serena/

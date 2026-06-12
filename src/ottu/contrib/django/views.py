@@ -33,7 +33,9 @@ class WebhookViewAbstractView(ContextMixin, View):
         return self._data
 
     def verify(self) -> bool:
-        signature_server = self.data.get("signature", "")
+        signature_server = self.data.get("signature") or ""
+        if not signature_server:
+            return False
         return verify_signature(
             payload=self.data,
             signature=signature_server,
