@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.10.0 — June 12, 2026
+
+- Feature #154718: Add subscription HMAC verification with backward-compatible dual-scheme `verify_signature`
+- Fix #154780: Webhook HMAC skip guard, null-signature crash, and test gaps
+
+---
+
 ## 1.9.0 — May 6, 2026
 
 - Feature #153453: Add Payment Status Query (PSQ) support — POST /b/pbl/v2/inquiry/
