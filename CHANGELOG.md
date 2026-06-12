@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.1 — June 12, 2026
+
+- Task #155509: Update README for PSQ + subscription HMAC verification (v1.9.0, v1.10.0)
+
+---
+
 ## 1.10.0 — June 12, 2026
 
 - Feature #154718: Add subscription HMAC verification with backward-compatible dual-scheme `verify_signature`
