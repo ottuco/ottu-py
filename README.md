@@ -288,7 +288,7 @@ response = ottu.session.cancel(session_id="your-session-id")
 print(response)
 ```
 
-To specify the `order_no` while canceling the session, you can pass the `order_no` as an argument to the `cancel(...)`
+To specify the `order_id` while canceling the session, you can pass the `order_id` as an argument to the `cancel(...)`
 method.
 
 ```python
@@ -370,6 +370,34 @@ ottu = Ottu(
     auth=APIKeyAuth("your-secret-api-key"),
 )
 response = ottu.session.void(session_id="your-session-id", tracking_key="your-tracking-key")
+print(response)
+```
+
+#### Payment Status Query (PSQ)
+
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+)
+response = ottu.session.psq(session_id="your-session-id")
+print(response)
+```
+
+To specify the `order_id` while querying, you can pass the `order_id` as an argument to the `psq(...)` method.
+
+```python
+from ottu import Ottu
+from ottu.auth import APIKeyAuth
+
+ottu = Ottu(
+    merchant_id="merchant.id.ottu.dev",
+    auth=APIKeyAuth("your-secret-api-key"),
+)
+response = ottu.session.psq(order_id="your-order-id")
 print(response)
 ```
 
@@ -844,7 +872,8 @@ print(response)
 ```
 
 ### Webhook Verification
-You can verify the webhook signature using `verify_signature(...)` function.
+
+Verify the webhook signature using `verify_signature(...)`. It automatically handles both standard payment webhooks (18-field scheme) and subscription/autopay webhooks (26-field scheme) — the same call works for both.
 
 ```python
 from ottu.utils.webhooks import verify_signature
@@ -859,9 +888,45 @@ webhook_data_received = {
 verified = verify_signature(
    payload=webhook_data_received,
    signature=webhook_data_received["signature"], # Usually, signature will be sent along with the webhook data.
-   webhook_key=hmac_secret_key_recieved_from_ottu # HMAC Secret Key received from Ottu
+   webhook_key=hmac_secret_key_received_from_ottu  # HMAC Secret Key received from Ottu
 )
 ```
+
+#### Subscription / Autopay Webhooks
+
+Subscription/autopay webhooks are signed with an extended 26-field scheme that includes nested fields
+(`token.*`, `agreement.id`, `extra.*`). `verify_signature` handles this automatically via fallback,
+but you can compute the signature directly using `calculate_subscription_hmac_signature`:
+
+```python
+from ottu.utils.webhooks import calculate_subscription_hmac_signature
+
+subscription_webhook = {
+    "amount": "86.000",
+    "currency_code": "KWD",
+    "payment_type": "auto_debit",
+    "session_id": "your-session-id",
+    "token": {
+        "token": "card-token-value",
+        "customer_id": "your-customer-id",
+        "pg_code": "mpgs",
+    },
+    "agreement": {"id": "your-agreement-id"},
+    "extra": {
+        "merchant_id": "your-merchant-id",
+        "autopay": {"subscription_id": "sub-123"},
+    },
+    ...,  # other attributes
+}
+sig = calculate_subscription_hmac_signature(
+    payload=subscription_webhook,
+    hmac_key=hmac_secret_key_received_from_ottu,
+)
+```
+
+The subscription scheme covers 26 fields: the standard 18 flat fields plus `agreement.id`,
+`extra.autopay.subscription_id`, `extra.merchant_id`, `payment_type`, `session_id`,
+`token.customer_id`, `token.pg_code`, and `token.token`.
 
 ### API Response Structure
 
