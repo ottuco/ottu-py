@@ -90,6 +90,9 @@ def verify_signature(
     # Body ``signature``: the documented 18-field recipe only. The extended set is
     # verified from the Ottu-Signature header (verify_ottu_signature). Accepting
     # it here too would let an 18-field signature stand in for fields it never covered.
+    # An empty key lets anyone mint a valid HMAC; a non-str key makes hmac raise.
+    if not isinstance(webhook_key, str) or not webhook_key:
+        return False
     # ``signature`` is untrusted JSON; compare_digest raises on non-ASCII str / non-str.
     if not isinstance(signature, str) or not signature.isascii():
         return False
@@ -106,11 +109,15 @@ def verify_ottu_signature(
 ) -> bool:
     """Verify the ``Ottu-Signature: t=<unix_seconds>,v1=<hex>`` webhook header (v1).
 
-    Returns ``False`` for every failure and never raises: missing or malformed
-    header, bad ``t``, ``t`` further than ``tolerance_seconds`` from now (either
-    direction; ``None`` disables the check), non-string signed value, or HMAC
-    mismatch. Unknown header keys (``v2``...) are ignored.
+    Returns ``False`` for every failure and never raises on header or payload
+    input: missing or malformed header, bad ``t``, ``t`` further than
+    ``tolerance_seconds`` from now (either direction; ``None`` disables the
+    check), non-string signed value, or HMAC mismatch. Unknown header keys
+    (``v2``...) are ignored. An empty or non-str ``webhook_key`` also returns
+    ``False``: an empty key lets anyone mint a valid HMAC.
     """
+    if not isinstance(webhook_key, str) or not webhook_key:
+        return False
     if not isinstance(header, str):
         return False
     pairs: dict[str, str] = {}
@@ -123,7 +130,7 @@ def verify_ottu_signature(
     # the float math below from raising on a crafted header (unix seconds: 10 digits).
     if not (t.isascii() and t.isdigit() and len(t) <= _MAX_T_DIGITS):
         return False
-    if not received or not received.isascii():
+    if not received.isascii():
         return False
     if tolerance_seconds is not None and abs(time.time() - int(t)) > tolerance_seconds:
         return False

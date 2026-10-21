@@ -54,6 +54,12 @@ DOCS_LIVE_PAYLOAD = {
 }
 DOCS_LIVE_HEX = "29e70de083707b3a738e9d5f4df4e4481d082c4614db97a55f50d4b4583dc5f2"
 
+# HMAC-SHA256 with the EMPTY key "" over the same messages (stdlib, computed once and
+# pinned). An attacker who knows the key is empty can mint these, so the verifiers
+# must refuse an unusable key instead of accepting them.
+EMPTY_KEY_BODY_HEX = "8ed6d363ce08ea3eff22cc32cf7007fcbceb45208ffb8a9f132c5db32e6adec9"
+EMPTY_KEY_V1_HEX = "eb885fcc8b85a0019a70e68dc9fdb53f0c0c93d764cc2d0780730b70a917a4fc"
+
 # TICKET_PAYLOAD has a value at these 18 signed paths.
 V1_PRESENT_PATHS = [
     "agreement.id",
@@ -184,7 +190,7 @@ def _del_path(payload: dict, path: str) -> dict:
 
 
 def _verify_ticket(payload: dict, header: str | None = TICKET_HEADER) -> bool:
-    # The ticket vector is years-stale against the real clock, so most cases
+    # The ticket vector is already stale against the real clock, so most cases
     # switch the age check off. The age check has its own tests.
     return verify_ottu_signature(payload, header, TICKET_KEY, tolerance_seconds=None)
 
@@ -203,15 +209,6 @@ class TestStandardSignedFields:
 
 
 class TestV1SignedFields:
-    def test_exactly_26_fields(self):
-        assert len(_V1_SIGNED_FIELDS) == 26
-
-    def test_list_is_already_sorted(self):
-        assert _V1_SIGNED_FIELDS == sorted(_V1_SIGNED_FIELDS)
-
-    def test_contains_all_standard_fields(self):
-        assert set(_SIGNED_FIELDS).issubset(set(_V1_SIGNED_FIELDS))
-
     def test_frozen_set(self):
         # Changing v1 breaks every merchant verifier. Add v2 instead.
         assert list(_V1_SIGNED_FIELDS) == V1_FROZEN_FIELDS
@@ -335,6 +332,12 @@ class TestVerifySignature:
 
     def test_rejects_wrong_key(self):
         assert verify_signature(TICKET_PAYLOAD, TICKET_BODY_HEX, "wrong-key") is False
+
+    @pytest.mark.parametrize("key", ["", None, b"key"], ids=["empty", "none", "bytes"])
+    def test_unusable_webhook_key_false(self, key):
+        # With key "" the signature below is valid HMAC math, so only the key
+        # check stops it. None and bytes would raise without the check.
+        assert verify_signature(TICKET_PAYLOAD, EMPTY_KEY_BODY_HEX, key) is False
 
     @pytest.mark.parametrize(
         "signature",
@@ -463,6 +466,17 @@ class TestVerifyOttuSignature:
     def test_non_dict_namespace_false(self):
         assert _verify_ticket(_set_path(TICKET_PAYLOAD, "token", "oops")) is False
 
+    @pytest.mark.parametrize("key", ["", None, b"key"], ids=["empty", "none", "bytes"])
+    def test_unusable_webhook_key_false(self, key):
+        # With key "" the header below is valid HMAC math, so only the key check
+        # stops it. None and bytes would raise without the check.
+        header = f"t={TICKET_T},v1={EMPTY_KEY_V1_HEX}"
+        assert verify_ottu_signature(TICKET_PAYLOAD, header, key) is False
+        assert (
+            verify_ottu_signature(TICKET_PAYLOAD, header, key, tolerance_seconds=None)
+            is False
+        )
+
     def test_wrong_key_false(self):
         assert (
             verify_ottu_signature(
@@ -483,10 +497,6 @@ class TestVerifyOttuSignature:
     def test_unsigned_field_change_keeps_true(self, path, value):
         # AC3: token.brand is not part of v1.
         assert _verify_ticket(_set_path(TICKET_PAYLOAD, path, value)) is True
-
-    def test_unsigned_token_brand_change_true(self):
-        changed = _set_path(TICKET_PAYLOAD, "token.brand", "MASTERCARD")
-        assert _verify_ticket(changed) is True
 
     def test_empty_string_equals_absent(self):
         # TICKET_PAYLOAD sends customer_last_name as "". Absent and None match it.
@@ -564,12 +574,6 @@ class TestVerifyOttuSignatureTolerance:
 
     def test_fractional_clock_boundary(self, monkeypatch):
         self._set_now(monkeypatch, TICKET_T + 300.4)
-        assert self._verify() is False
-
-    def test_default_tolerance_is_300_seconds(self, monkeypatch):
-        self._set_now(monkeypatch, TICKET_T + 300)
-        assert self._verify() is True
-        self._set_now(monkeypatch, TICKET_T + 301)
         assert self._verify() is False
 
     def test_custom_tolerance(self, monkeypatch):

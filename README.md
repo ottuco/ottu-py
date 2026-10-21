@@ -877,7 +877,7 @@ print(response)
 
 ### Webhook Verification
 
-Verify the body `signature` using `verify_signature(...)`. It checks the documented 18-field recipe only. It returns `False` for a missing, non-string or non-ASCII signature.
+Verify the body `signature` using `verify_signature(...)`. It checks the documented 18-field recipe only. It returns `False` for a missing, non-string or non-ASCII signature, and for an empty or non-string `webhook_key`.
 
 ```python
 from ottu.utils.webhooks import verify_signature
@@ -899,8 +899,8 @@ verified = verify_signature(
 #### `Ottu-Signature` header (subscription / autopay webhooks)
 
 Subscription/autopay webhooks carry a second, versioned signature in the `Ottu-Signature` HTTP header:
-`t=<unix_seconds>,v1=<hex>`. The `v1` value also covers the nested fields (`token.*`, `agreement.id`, `extra.*`)
-and the timestamp `t`. The body `signature` does **not** cover them, so an autopay receiver must verify the header.
+`t=<unix_seconds>,v1=<hex>`. The `v1` value covers the 18 body fields, 8 more fields (listed below) and the
+timestamp `t`. The body `signature` does **not** cover those 8 fields, so an autopay receiver must verify the header.
 
 ```python
 from ottu.utils.webhooks import verify_ottu_signature
@@ -912,13 +912,14 @@ verified = verify_ottu_signature(
 )
 ```
 
-- It returns `False` and never raises: missing or malformed header, bad `t`, signature mismatch, or a signed
-  value that is not a JSON string. Unknown header keys such as `v2` are ignored.
+- It returns `False` and never raises on a bad header or body: missing or malformed header, bad `t`, signature
+  mismatch, or a signed value that is not a JSON string. Unknown header keys such as `v2` are ignored.
+  An empty or non-string `webhook_key` also returns `False`.
 - `t` must be within `tolerance_seconds` of the current time, in the past or in the future (default `300`).
   Pass `tolerance_seconds=None` to switch the age check off.
-- `v1` signs 26 fields: the standard 18 flat fields plus `agreement.id`, `extra.autopay.subscription_id`,
+- `v1` signs exactly 26 fields: the standard 18 flat fields plus `agreement.id`, `extra.autopay.subscription_id`,
   `extra.merchant_id`, `payment_type`, `session_id`, `token.customer_id`, `token.pg_code` and `token.token`.
-  This set is frozen; a change would be a new version (`v2`).
+  No other `token` or `extra` key is signed. This set is frozen; a change would be a new version (`v2`).
 
 ### API Response Structure
 
