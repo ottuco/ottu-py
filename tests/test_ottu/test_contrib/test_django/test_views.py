@@ -125,7 +125,7 @@ class TestWebhookReceiveView:
         assert response.json() == {"detail": "Unable to verify signature"}
 
 
-# The README "Ottu-Signature header" override, exercised as written.
+# The README Webhooks section's verify() override, exercised as written.
 @method_decorator(csrf_exempt, name="dispatch")
 class WebhookReceiverView(WebhookViewAbstractView):
     def verify(self) -> bool:
