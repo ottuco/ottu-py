@@ -3,6 +3,7 @@
 ## 2.0.0 (unreleased)
 
 - Task #154780: Breaking: removed `calculate_subscription_hmac_signature`; `verify_signature` accepts the documented 18-field recipe only; added `verify_ottu_signature`.
+- Task #154780: both verifiers return `False` for an empty or non-`str` `webhook_key` (an empty key used to verify an attacker-signed payload). `verify_signature` returns `False` instead of raising for a non-`str` or non-ASCII `signature` and for a lone surrogate in a signed value.
 
 ---
 

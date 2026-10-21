@@ -137,8 +137,8 @@ webhook_payload = {
 
 # ---------------------------------------------------------------------------
 # Pinned vectors from ticket #154780 (same as Connect #154718 / docs #160525).
-# Every expected value below is a literal hex string. No test computes an
-# expected value with the library's own signer.
+# Every expected value below is a literal hex string. No expected value below comes
+# from the library's own signer.
 # ---------------------------------------------------------------------------
 
 TICKET_KEY = "pu9MpX3yPR"

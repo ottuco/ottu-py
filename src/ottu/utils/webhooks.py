@@ -28,10 +28,11 @@ _SIGNED_FIELDS = [
     "state",
 ]
 
-# Ottu-Signature v1 field set: _SIGNED_FIELDS + 8 nested/extra dotted paths
-# (token, agreement, extra autopay metadata). Signed in the ``Ottu-Signature``
-# header, never in the body ``signature``. FROZEN: every merchant verifier signs
-# exactly this set, so any change to it is v2, never an edit of v1.
+# Ottu-Signature v1 field set: _SIGNED_FIELDS + 8 more paths (6 nested dotted
+# paths under token, agreement and extra, plus payment_type and session_id).
+# Signed in the ``Ottu-Signature`` header, never in the body ``signature``.
+# FROZEN: every merchant verifier signs exactly this set, so any change to it
+# is v2, never an edit of v1.
 _V1_SIGNED_FIELDS = sorted(
     _SIGNED_FIELDS
     + [
@@ -47,13 +48,15 @@ _V1_SIGNED_FIELDS = sorted(
 )
 
 _MISSING = object()
-_MAX_T_DIGITS = 12
 
 
 def _hmac_digest(message: str, key: str) -> str:
+    # surrogatepass: a lone surrogate from untrusted JSON (json.loads('"\\ud800"'))
+    # must not raise. It encodes to bytes no valid string produces, so two
+    # different messages still never share a digest.
     return hmac.new(
         key.encode("utf8"),
-        message.encode("utf8"),
+        message.encode("utf8", "surrogatepass"),
         digestmod=hashlib.sha256,
     ).hexdigest()
 
@@ -90,7 +93,7 @@ def verify_signature(
     # Body ``signature``: the documented 18-field recipe only. The extended set is
     # verified from the Ottu-Signature header (verify_ottu_signature). Accepting
     # it here too would let an 18-field signature stand in for fields it never covered.
-    # An empty key lets anyone mint a valid HMAC; a non-str key makes hmac raise.
+    # An empty key lets anyone mint a valid HMAC; a non-str key raises in key.encode.
     if not isinstance(webhook_key, str) or not webhook_key:
         return False
     # ``signature`` is untrusted JSON; compare_digest raises on non-ASCII str / non-str.
@@ -126,9 +129,10 @@ def verify_ottu_signature(
         if sep:
             pairs[key.strip()] = value.strip()
     t, received = pairs.get("t", ""), pairs.get("v1", "")
-    # isdigit() alone accepts "²", then int() raises. The length cap keeps int() and
-    # the float math below from raising on a crafted header (unix seconds: 10 digits).
-    if not (t.isascii() and t.isdigit() and len(t) <= _MAX_T_DIGITS):
+    # isdigit() alone accepts "²", then int() raises. Unix seconds have 10 digits
+    # today; capping at 12 keeps int() and the float math below from raising on a
+    # crafted header.
+    if not (t.isascii() and t.isdigit() and len(t) <= 12):
         return False
     if not received.isascii():
         return False
@@ -137,11 +141,7 @@ def verify_ottu_signature(
     message = _v1_message(payload, t)
     if message is None:
         return False
-    try:
-        expected = _hmac_digest(message, webhook_key)
-    except UnicodeEncodeError:  # lone surrogate in a value from untrusted JSON
-        return False
-    return hmac.compare_digest(expected, received)
+    return hmac.compare_digest(_hmac_digest(message, webhook_key), received)
 
 
 def calculate_hmac_signature(payload: dict, hmac_key: str) -> str:

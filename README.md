@@ -752,8 +752,24 @@ urlpatterns = [
 ]
 ```
 
-The view verifies the body `signature` only (see [Webhook Verification](#webhook-verification)). To also verify the
-`Ottu-Signature` header, override `verify()` and call `verify_ottu_signature(...)` with `self.request.headers`.
+The view verifies the body `signature` only (see [Webhook Verification](#webhook-verification)). A subscription or
+autopay receiver must verify the `Ottu-Signature` header instead. `v1` covers the 18 body fields too, so the header
+check alone is enough. Override `verify()`:
+
+```python
+from ottu.contrib.django import conf
+from ottu.contrib.django.views import WebhookViewAbstractView
+from ottu.utils.webhooks import verify_ottu_signature
+
+
+class WebhookReceiverView(WebhookViewAbstractView):
+    def verify(self) -> bool:
+        return verify_ottu_signature(
+            payload=self.data,
+            header=self.request.headers.get("Ottu-Signature"),
+            webhook_key=conf.WEBHOOK_KEY,
+        )
+```
 
 ### Miscellaneous
 
@@ -898,9 +914,10 @@ verified = verify_signature(
 
 #### `Ottu-Signature` header (subscription / autopay webhooks)
 
-Subscription/autopay webhooks carry a second, versioned signature in the `Ottu-Signature` HTTP header:
-`t=<unix_seconds>,v1=<hex>`. The `v1` value covers the 18 body fields, 8 more fields (listed below) and the
-timestamp `t`. The body `signature` does **not** cover those 8 fields, so an autopay receiver must verify the header.
+Connect adds a second, versioned signature to every webhook delivery in the `Ottu-Signature` HTTP header:
+`t=<unix_seconds>,v1=<hex>` (versions are set per merchant; the default is `v1`). The `v1` value covers the 18 body
+fields, 8 more fields (listed below) and the timestamp `t`. The body `signature` does **not** cover those 8 fields,
+so a subscription/autopay receiver must verify the header.
 
 ```python
 from ottu.utils.webhooks import verify_ottu_signature

@@ -81,17 +81,6 @@ V1_PRESENT_PATHS = [
     "token.pg_code",
     "token.token",
 ]
-# ... and none (or "") at these 8.
-V1_ABSENT_PATHS = [
-    "customer_address_city",
-    "customer_address_country",
-    "customer_address_line1",
-    "customer_address_line2",
-    "customer_address_postal_code",
-    "customer_address_state",
-    "customer_last_name",
-    "customer_phone",
-]
 # The frozen v1 set, spelled out so that any change to it fails a test.
 # Any change to this set is a new version (v2), never an edit of v1.
 V1_FROZEN_FIELDS = [
@@ -122,6 +111,8 @@ V1_FROZEN_FIELDS = [
     "token.pg_code",
     "token.token",
 ]
+# ... and none (or "") at the other 8.
+V1_ABSENT_PATHS = [p for p in V1_FROZEN_FIELDS if p not in V1_PRESENT_PATHS]
 
 # Present in a real webhook payload but deliberately NOT signed by v1.
 V1_UNSIGNED_PATHS = [
@@ -347,6 +338,13 @@ class TestVerifySignature:
     def test_rejects_bad_signature_without_raising(self, signature):
         # `signature` comes from untrusted JSON. It must return False, never raise.
         assert verify_signature(TICKET_PAYLOAD, signature, TICKET_KEY) is False
+
+    @pytest.mark.parametrize("path", ["reference_number", "customer_first_name"])
+    def test_lone_surrogate_in_signed_value_false(self, path):
+        # json.loads('"\\ud800"') yields a str that cannot be UTF-8 encoded.
+        # Must be False, never raise.
+        changed = _set_path(TICKET_PAYLOAD, path, "\ud800")
+        assert verify_signature(changed, TICKET_BODY_HEX, TICKET_KEY) is False
 
 
 # ---------------------------------------------------------------------------
