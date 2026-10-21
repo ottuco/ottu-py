@@ -2,7 +2,10 @@ from types import SimpleNamespace
 
 import pytest
 from django.shortcuts import reverse
-from django.test import RequestFactory
+from django.test import Client, override_settings
+from django.urls import path
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 
 from ottu.contrib.django import conf
 from ottu.contrib.django.models import Webhook
@@ -107,7 +110,7 @@ class TestWebhookReceiveView:
         # The view must fail closed (401), not raise (500).
         payload = {
             **TICKET_PAYLOAD,
-            "reference_number": "\ud800",
+            "reference_number": TICKET_PAYLOAD["reference_number"] + "\ud800",
             "signature": TICKET_BODY_HEX,
         }
         pre_count = Webhook.objects.count()
@@ -123,6 +126,7 @@ class TestWebhookReceiveView:
 
 
 # The README "Ottu-Signature header" override, exercised as written.
+@method_decorator(csrf_exempt, name="dispatch")
 class WebhookReceiverView(WebhookViewAbstractView):
     def verify(self) -> bool:
         return verify_ottu_signature(
@@ -132,35 +136,51 @@ class WebhookReceiverView(WebhookViewAbstractView):
         )
 
 
+urlpatterns = [path("wh-view-header/", WebhookReceiverView.as_view())]
+
+
+@pytest.mark.urls(__name__)
 class TestOttuSignatureHeaderOverride:
     @pytest.fixture(autouse=True)
     def _pin_clock(self, monkeypatch):
         # Replace `time` in the module under test only. The global clock stays real.
         monkeypatch.setattr(webhooks, "time", SimpleNamespace(time=lambda: TICKET_T))
 
-    @staticmethod
-    def _post(payload: dict, header: str | None = TICKET_HEADER):
-        extra = {} if header is None else {"HTTP_OTTU_SIGNATURE": header}
-        request = RequestFactory().post(
-            "/wh-view/", data=payload, content_type="application/json", **extra
-        )
-        return WebhookReceiverView.as_view()(request)
+    @pytest.fixture
+    def csrf_client(self):
+        # Connect posts server-to-server with no CSRF cookie. The middleware is on
+        # and enforced, so a missing csrf_exempt shows up as 403 here.
+        middleware = ["django.middleware.csrf.CsrfViewMiddleware"]
+        with override_settings(MIDDLEWARE=middleware):
+            yield Client(enforce_csrf_checks=True)
 
-    def test_genuine_body_and_header_accepted(self):
+    @staticmethod
+    def _post(client, payload: dict, header: str | None = TICKET_HEADER):
+        extra = {} if header is None else {"HTTP_OTTU_SIGNATURE": header}
+        return client.post(
+            "/wh-view-header/",
+            data=payload,
+            content_type="application/json",
+            **extra,
+        )
+
+    def test_genuine_body_and_header_accepted(self, csrf_client):
         pre_count = Webhook.objects.count()
-        response = self._post({**TICKET_PAYLOAD, "signature": TICKET_BODY_HEX})
+        response = self._post(
+            csrf_client, {**TICKET_PAYLOAD, "signature": TICKET_BODY_HEX}
+        )
         assert response.status_code == 200
         assert Webhook.objects.count() == pre_count + 1
 
-    def test_missing_header_rejected(self):
+    def test_missing_header_rejected(self, csrf_client):
         pre_count = Webhook.objects.count()
         response = self._post(
-            {**TICKET_PAYLOAD, "signature": TICKET_BODY_HEX}, header=None
+            csrf_client, {**TICKET_PAYLOAD, "signature": TICKET_BODY_HEX}, header=None
         )
         assert response.status_code == 401
         assert Webhook.objects.count() == pre_count
 
-    def test_tampered_token_rejected(self):
+    def test_tampered_token_rejected(self, csrf_client):
         # token.token is covered by v1, not by the body signature.
         tampered = {
             **TICKET_PAYLOAD,
@@ -168,11 +188,11 @@ class TestOttuSignatureHeaderOverride:
             "signature": TICKET_BODY_HEX,
         }
         pre_count = Webhook.objects.count()
-        response = self._post(tampered)
+        response = self._post(csrf_client, tampered)
         assert response.status_code == 401
         assert Webhook.objects.count() == pre_count
 
-    def test_body_signature_is_ignored(self):
+    def test_body_signature_is_ignored(self, csrf_client):
         # The override is header-only by design: v1 covers the 18 body fields too.
-        response = self._post({**TICKET_PAYLOAD, "signature": "wrong"})
+        response = self._post(csrf_client, {**TICKET_PAYLOAD, "signature": "wrong"})
         assert response.status_code == 200

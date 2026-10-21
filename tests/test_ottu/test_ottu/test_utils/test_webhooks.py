@@ -343,7 +343,7 @@ class TestVerifySignature:
     def test_lone_surrogate_in_signed_value_false(self, path):
         # json.loads('"\\ud800"') yields a str that cannot be UTF-8 encoded.
         # Must be False, never raise.
-        changed = _set_path(TICKET_PAYLOAD, path, "\ud800")
+        changed = _set_path(TICKET_PAYLOAD, path, TICKET_PAYLOAD[path] + "\ud800")
         assert verify_signature(changed, TICKET_BODY_HEX, TICKET_KEY) is False
 
 

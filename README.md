@@ -754,14 +754,20 @@ urlpatterns = [
 
 The view verifies the body `signature` only (see [Webhook Verification](#webhook-verification)). A subscription or
 autopay receiver must verify the `Ottu-Signature` header instead. `v1` covers the 18 body fields too, so the header
-check alone is enough. Override `verify()`:
+check alone is enough. Override `verify()` in the view above, and keep `csrf_exempt`: Connect posts
+server-to-server with no CSRF token.
 
 ```python
+# views.py
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
 from ottu.contrib.django import conf
 from ottu.contrib.django.views import WebhookViewAbstractView
 from ottu.utils.webhooks import verify_ottu_signature
 
 
+@method_decorator(csrf_exempt, name="dispatch")
 class WebhookReceiverView(WebhookViewAbstractView):
     def verify(self) -> bool:
         return verify_ottu_signature(
@@ -912,7 +918,7 @@ verified = verify_signature(
 )
 ```
 
-#### `Ottu-Signature` header (subscription / autopay webhooks)
+#### `Ottu-Signature` header
 
 Connect adds a second, versioned signature to every webhook delivery in the `Ottu-Signature` HTTP header:
 `t=<unix_seconds>,v1=<hex>` (versions are set per merchant; the default is `v1`). The `v1` value covers the 18 body
