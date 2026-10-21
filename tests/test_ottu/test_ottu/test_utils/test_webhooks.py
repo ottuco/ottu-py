@@ -439,6 +439,8 @@ class TestVerifyOttuSignature:
     )
     def test_header_missing_or_malformed_false(self, header):
         assert _verify_ticket(TICKET_PAYLOAD, header) is False
+        # The default tolerance runs int(t); a malformed t must not reach it.
+        assert verify_ottu_signature(TICKET_PAYLOAD, header, TICKET_KEY) is False
 
     @pytest.mark.parametrize("digits", [13, 400, 5000])
     def test_oversized_t_false_without_raising(self, digits):
@@ -584,3 +586,17 @@ class TestVerifyOttuSignatureTolerance:
         self._set_now(monkeypatch, TICKET_T)
         changed = _set_path(TICKET_PAYLOAD, "session_id", "attacker")
         assert verify_ottu_signature(changed, TICKET_HEADER, TICKET_KEY) is False
+
+
+class TestConstantTimeCompare:
+    # Secure SDLC rule: signatures are compared in constant time. Behaviour cannot
+    # show that, so check that the comparison goes through hmac.compare_digest.
+    def test_verify_signature_uses_compare_digest(self, mocker):
+        spy = mocker.spy(webhooks.hmac, "compare_digest")
+        assert verify_signature(TICKET_PAYLOAD, TICKET_BODY_HEX, TICKET_KEY) is True
+        spy.assert_called_once()
+
+    def test_verify_ottu_signature_uses_compare_digest(self, mocker):
+        spy = mocker.spy(webhooks.hmac, "compare_digest")
+        assert _verify_ticket(TICKET_PAYLOAD) is True
+        spy.assert_called_once()
