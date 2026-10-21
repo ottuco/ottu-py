@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.0 (unreleased)
+
+- Task #154780: Breaking: removed `calculate_subscription_hmac_signature`; `verify_signature` accepts the documented 18-field recipe only; added `verify_ottu_signature`.
+
+---
+
 ## 1.10.1 — June 12, 2026
 
 - Task #155509: Update README for PSQ + subscription HMAC verification (v1.9.0, v1.10.0)
