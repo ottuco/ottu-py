@@ -440,6 +440,19 @@ class TestVerifyOttuSignature:
     def test_header_missing_or_malformed_false(self, header):
         assert _verify_ticket(TICKET_PAYLOAD, header) is False
 
+    @pytest.mark.parametrize("digits", [13, 400, 5000])
+    def test_oversized_t_false_without_raising(self, digits):
+        # int() raises ValueError past 4300 digits (3.10.7+) and float() math raises
+        # OverflowError past ~308 digits. Unix seconds never need more than 12.
+        header = f"t={'9' * digits},v1={TICKET_V1_HEX}"
+        assert _verify_ticket(TICKET_PAYLOAD, header) is False
+        assert verify_ottu_signature(TICKET_PAYLOAD, header, TICKET_KEY) is False
+
+    @pytest.mark.parametrize("path", ["reference_number", "token.token"])
+    def test_lone_surrogate_in_signed_value_false(self, path):
+        # json.loads('"\\ud800"') yields a str that cannot be UTF-8 encoded.
+        assert _verify_ticket(_set_path(TICKET_PAYLOAD, path, "\ud800")) is False
+
     def test_non_dict_payload_false(self):
         # Callers sometimes hold the raw body (str). It must not raise.
         assert _verify_ticket("not-a-dict") is False  # type: ignore[arg-type]
