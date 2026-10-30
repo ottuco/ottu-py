@@ -1,4 +1,7 @@
+import logging
+
 import httpx
+import pytest
 
 from ottu import Ottu
 
@@ -68,6 +71,46 @@ class TestRequest:
             "success": False,
         }
         assert response.as_dict() == expected_response
+
+    @pytest.mark.parametrize(
+        ("status_code", "level"),
+        [
+            (400, logging.WARNING),
+            (404, logging.WARNING),
+            (422, logging.WARNING),
+            (429, logging.WARNING),
+            (401, logging.ERROR),
+            (403, logging.ERROR),
+            (407, logging.ERROR),
+            (408, logging.ERROR),
+            (500, logging.ERROR),
+            (502, logging.ERROR),
+        ],
+    )
+    def test_non_2xx_log_level(
+        self, httpx_mock, auth_basic, caplog, status_code, level
+    ):
+        httpx_mock.add_response(
+            url="https://test.ottu.dev/any/path",
+            method="GET",
+            status_code=status_code,
+            json={"detail": "error"},
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_basic)
+        with caplog.at_level(logging.INFO, logger="ottu-py"):
+            ottu.send_request(path="/any/path", method="GET")
+        levels = [r.levelno for r in caplog.records if r.levelno >= logging.WARNING]
+        assert levels == [level]
+
+    def test_transport_error_logs_error(self, mocker, auth_api_key, caplog):
+        mocker.patch(
+            "httpx._client.Client.request", side_effect=httpx.HTTPError("error")
+        )
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        with caplog.at_level(logging.INFO, logger="ottu-py"):
+            ottu.send_request(path="/any/path", method="GET")
+        levels = [r.levelno for r in caplog.records if r.levelno >= logging.WARNING]
+        assert levels == [logging.ERROR]
 
     def test_default_timeout(self, httpx_mock, auth_api_key):
         httpx_mock.add_response(
