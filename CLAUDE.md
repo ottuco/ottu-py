@@ -109,7 +109,7 @@ bump2version major  # 1.1.0 → 2.0.0
 1. **Error Handling**: All API errors raise `OttuHTTPException` with detailed error info
 2. **Type Safety**: Uses dataclasses extensively for request/response objects
 3. **Django Models**: Store payment data locally, sync with Ottu API
-4. **Webhook Verification**: Always verify webhook signatures using `utils.validate_webhook_signature`
+4. **Webhook Verification**: `verify_signature` checks the body `signature` (18 fields, default Django view). `verify_ottu_signature_raw` checks the `Ottu-Signature` header (`v2`, raw body bytes). Use it only after the merchant confirms their Connect sends the header, never with a body fallback.
 5. **Auto-flow**: When `pg_codes='auto'`, SDK selects payment gateway based on currency
 
 ## Django-Specific Notes

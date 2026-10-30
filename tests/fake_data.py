@@ -134,3 +134,77 @@ webhook_payload = {
     "random_field_1": "Support Random Field 1.",
     "random_field_2": "Support Random Field 2.",
 }
+
+# ---------------------------------------------------------------------------
+# Pinned body-signature vectors.
+# Every expected value below is a literal hex string. No expected value below comes
+# from the library's own signer.
+# ---------------------------------------------------------------------------
+
+WEBHOOK_KEY = "pu9MpX3yPR"
+WEBHOOK_TIMESTAMP = 1792417440
+SIGNED_PAYLOAD = {
+    "amount": "86.000",
+    "currency_code": "KWD",
+    "customer_email": "jane@example.com",
+    "customer_first_name": "Jane",
+    "customer_last_name": "",
+    "gateway_account": "credit-card",
+    "gateway_name": "mpgs",
+    "order_no": "ORD-1001",
+    "reference_number": "ABC12",
+    "result": "success",
+    "state": "paid",
+    "session_id": "6c2a1f0e9b",
+    "payment_type": "auto_pay",
+    "extra": {
+        "merchant_id": "merchant.ottu.net",
+        "autopay": {"subscription_id": "sub_1eQ"},
+    },
+    "token": {
+        "token": "9923965822244314",
+        "pg_code": "credit-card",
+        "customer_id": "cust_123",
+        "brand": "VISA",
+    },
+    "agreement": {"id": "A123456789"},
+}
+SIGNED_PAYLOAD_SIGNATURE = (
+    "bb0e1db6fa9b7e3bd62a731a0e105431427498aa2a5a2282deee4f8737743c27"
+)
+# The abandoned 26-field BODY recipe (path=value, no t line) over SIGNED_PAYLOAD,
+# recomputed with stdlib hmac. It equals what 1.10.x
+# calculate_subscription_hmac_signature returned. It must never
+# verify as a body signature.
+SIGNED_PAYLOAD_EXTENDED_SIGNATURE = (
+    "6f0fd0692ce8ba2e93adda661f927e519842f752a2c5b2a6b2d8c4888de0bd75"
+)
+
+# ---------------------------------------------------------------------------
+# Ottu-Signature v2 vectors. v2 is
+# HMAC-SHA256(WEBHOOK_KEY, f"{WEBHOOK_TIMESTAMP}." + exact body bytes). The bodies are
+# bytes because v2 signs bytes, not a parsed payload.
+# ---------------------------------------------------------------------------
+
+V2_UNICODE_BODY = '{"id":"evt_1","data":{"customer_first_name":"Zoë احمد"}}'.encode(
+    "utf-8"
+)
+V2_UNICODE_SIGNATURE = (
+    "b230321937edb54b51b91f65d544aa8039e413f0a8e034e59acb9b13e11e7d4e"
+)
+# SIGNED_PAYLOAD as 536 bytes on the wire, byte for byte.
+V2_PAYMENT_BODY = (
+    b'{"amount":"86.000","currency_code":"KWD","customer_email":"jane@example.'
+    b'com","customer_first_name":"Jane","customer_last_name":"","gateway_accou'
+    b'nt":"credit-card","gateway_name":"mpgs","order_no":"ORD-1001","reference'
+    b'_number":"ABC12","result":"success","state":"paid","session_id":"6c2a1f0'
+    b'e9b","payment_type":"auto_pay","extra":{"merchant_id":"merchant.ottu.net'
+    b'","autopay":{"subscription_id":"sub_1eQ"}},"token":{"token":"99239658222'
+    b'44314","pg_code":"credit-card","customer_id":"cust_123","brand":"VISA"},'
+    b'"agreement":{"id":"A123456789"}}'
+)
+V2_PAYMENT_SIGNATURE = (
+    "9ccd4a0297b242c1132e09e382fa23fc5c56720ba60ca5af028088d0bd46d823"
+)
+V2_UNICODE_HEADER = f"t={WEBHOOK_TIMESTAMP},v2={V2_UNICODE_SIGNATURE}"
+V2_PAYMENT_HEADER = f"t={WEBHOOK_TIMESTAMP},v2={V2_PAYMENT_SIGNATURE}"
