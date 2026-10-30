@@ -59,6 +59,29 @@ class TestRequest:
         }
         assert response.as_dict() == expected_response
 
+    @pytest.mark.parametrize(
+        "exc, status_code",
+        [
+            (httpx.ConnectTimeout("timed out"), 504),
+            (httpx.ReadTimeout("timed out"), 504),
+            (httpx.WriteTimeout("timed out"), 504),
+            (httpx.PoolTimeout("timed out"), 504),
+            (httpx.ConnectError("refused"), 500),
+        ],
+    )
+    def test_process_httpx_error_codes(self, mocker, auth_api_key, exc, status_code):
+        mocker.patch("httpx._client.Client.request", side_effect=exc)
+        ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)
+        response = ottu.send_request(path="/any/path", method="GET")
+        expected_response = {
+            "endpoint": "/any/path",
+            "error": {"detail": str(exc)},
+            "response": {},
+            "status_code": status_code,
+            "success": False,
+        }
+        assert response.as_dict() == expected_response
+
     def test_process_any_error(self, mocker, auth_api_key):
         mocker.patch("httpx._client.Client.request", side_effect=Exception("error"))
         ottu = Ottu(merchant_id="test.ottu.dev", auth=auth_api_key)

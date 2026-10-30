@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.0.0 (unreleased)
+
+- Task #154780: Breaking: removed `calculate_subscription_hmac_signature`; `verify_signature` accepts the documented 18-field recipe only. It returns `False` instead of raising for a non-`str` or non-ASCII `signature` and for a lone surrogate in a signed value. It and `verify_ottu_signature_raw` also return `False` for an empty or non-`str` `webhook_key` (an empty key used to verify an attacker-signed payload).
+- Task #160605: added `verify_ottu_signature_raw`, which verifies the `Ottu-Signature: t=<unix>,v2=<hex>` header: HMAC-SHA256 over `t.` plus the exact raw request body.
+- Fix #160462: httpx timeouts (connect, read, write, pool) now return `status_code=504` instead of `500`. Other httpx errors and unknown errors still return `500`.
+
+---
+
 ## 1.10.2 — October 30, 2026
 
 - Fix #160703: ordinary 4xx responses are logged at `WARNING` instead of `ERROR`, so expected answers (for example PSQ "no payment attempts") no longer become Sentry issues. Auth failures (401/403/407), request timeouts (408), 5xx and transport errors stay at `ERROR`.

@@ -751,6 +751,50 @@ urlpatterns = [
     path("wh-view/", WebhookReceiverView.as_view(), name="wh-view"),
 ]
 ```
+
+The view verifies the body `signature` only (see [Webhook Verification](#webhook-verification)). If your receiver
+uses `session_id`, `payment_type`, `extra.*`, `token.*` or `agreement.id`, verify the `Ottu-Signature` header instead. `v2` signs every byte of the body, so the header
+check alone is enough. Override `verify()` in the view above, pass the raw bytes (`self.request.body`, not
+`self.data`), and keep `csrf_exempt`: Ottu posts server-to-server with no CSRF token.
+
+#### Before you switch to header verification
+
+Older Connect versions do not send the `Ottu-Signature` header. Header-only verification against such a version
+rejects every webhook with HTTP 401.
+
+Check your Connect version before you change the view. Use one of these two checks:
+
+1. Ask the Ottu team to confirm that your Connect version sends the `Ottu-Signature` header and signs it with `v2`.
+2. Log the headers of one real webhook. Find a header that matches this form:
+   `Ottu-Signature: t=1792417440,v2=9ccd4a0297b242c1132e09e382fa23fc5c56720ba60ca5af028088d0bd46d823`
+
+- If the header is missing, keep the default view. It verifies the body `signature`.
+- If the header is present, use `verify_ottu_signature_raw` in the view. Keep the header required on every request.
+
+> **Warning:** Never accept the body `signature` in place of a missing header. An attacker can remove the header and
+> change fields that the body `signature` does not cover, such as `session_id` or `agreement.id`. The view then
+> accepts the forged webhook.
+
+```python
+# views.py
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
+from ottu.contrib.django import conf
+from ottu.contrib.django.views import WebhookViewAbstractView
+from ottu.utils.webhooks import verify_ottu_signature_raw
+
+
+@method_decorator(csrf_exempt, name="dispatch")
+class WebhookReceiverView(WebhookViewAbstractView):
+    def verify(self) -> bool:
+        return verify_ottu_signature_raw(
+            body=self.request.body,
+            header=self.request.headers.get("Ottu-Signature"),
+            webhook_key=conf.WEBHOOK_KEY,
+        )
+```
+
 ### Miscellaneous
 
 ### Authentication
@@ -873,7 +917,7 @@ print(response)
 
 ### Webhook Verification
 
-Verify the webhook signature using `verify_signature(...)`. It automatically handles both standard payment webhooks (18-field scheme) and subscription/autopay webhooks (26-field scheme) — the same call works for both.
+Verify the body `signature` using `verify_signature(...)`. It checks the documented 18-field recipe only. It returns `False` for a missing, non-string or non-ASCII signature, and for an empty or non-string `webhook_key`.
 
 ```python
 from ottu.utils.webhooks import verify_signature
@@ -892,41 +936,34 @@ verified = verify_signature(
 )
 ```
 
-#### Subscription / Autopay Webhooks
+#### `Ottu-Signature` header
 
-Subscription/autopay webhooks are signed with an extended 26-field scheme that includes nested fields
-(`token.*`, `agreement.id`, `extra.*`). `verify_signature` handles this automatically via fallback,
-but you can compute the signature directly using `calculate_subscription_hmac_signature`:
+Newer Connect versions add a second signature to each webhook delivery in the `Ottu-Signature` HTTP header.
+Older versions do not send it, so read
+[Before you switch to header verification](#before-you-switch-to-header-verification) first. The header has this
+form: `t=<unix_seconds>,v2=<hex>`. `v2` is HMAC-SHA256, with the same key as the body `signature`, over `<t>.` followed by
+the exact raw request body. It covers every field in the body, including those the body `signature` does not
+(`session_id`, `payment_type`, `extra.*`, `token.*`, `agreement.id`), so a receiver that uses those fields must verify
+the header.
 
 ```python
-from ottu.utils.webhooks import calculate_subscription_hmac_signature
+from ottu.utils.webhooks import verify_ottu_signature_raw
 
-subscription_webhook = {
-    "amount": "86.000",
-    "currency_code": "KWD",
-    "payment_type": "auto_debit",
-    "session_id": "your-session-id",
-    "token": {
-        "token": "card-token-value",
-        "customer_id": "your-customer-id",
-        "pg_code": "mpgs",
-    },
-    "agreement": {"id": "your-agreement-id"},
-    "extra": {
-        "merchant_id": "your-merchant-id",
-        "autopay": {"subscription_id": "sub-123"},
-    },
-    ...,  # other attributes
-}
-sig = calculate_subscription_hmac_signature(
-    payload=subscription_webhook,
-    hmac_key=hmac_secret_key_received_from_ottu,
+verified = verify_ottu_signature_raw(
+    body=request.body,  # the raw bytes as received, NOT the parsed JSON
+    header=request.headers.get("Ottu-Signature"),
+    webhook_key=hmac_secret_key_received_from_ottu,
 )
 ```
 
-The subscription scheme covers 26 fields: the standard 18 flat fields plus `agreement.id`,
-`extra.autopay.subscription_id`, `extra.merchant_id`, `payment_type`, `session_id`,
-`token.customer_id`, `token.pg_code`, and `token.token`.
+- Pass the bytes exactly as received. Parsing the JSON and dumping it again changes the bytes (spaces, key order,
+  `\u` escapes), and the check fails.
+- It returns `False` and never raises on bad input: a body that is not `bytes`, a missing or malformed header, no
+  `v2` pair, a bad `t`, or a signature mismatch. Other versions in the header (a future `v3`) are ignored.
+  An empty or non-string `webhook_key` also returns `False`.
+- `t` must be within `tolerance_seconds` of the current time, in the past or in the future (default `300`).
+  Pass `tolerance_seconds=None` to switch the age check off.
+- Changing the recipe would be a new version (`v3`), never an edit of `v2`.
 
 ### API Response Structure
 
@@ -1006,13 +1043,22 @@ python -m pytest
 ```
 
 ## Release
-```base
-# do a dry-run first -
-bump2version --dry-run --verbose [major|minor|patch]
 
-# if everything looks good, run the following command to release
-bump2version --verbose [major|minor|patch]
+`main` accepts changes only through an approved pull request, so the version bump goes in the release PR.
 
-# push the changes to remote
-git push origin master --tags
+```bash
+# 1. On the PR branch: date the top CHANGELOG heading, then bump without a tag
+bump2version --dry-run --verbose --no-tag [major|minor|patch]
+bump2version --verbose --no-tag [major|minor|patch]
+git push
+
+# 2. After the PR is approved and merged, tag the merge commit on main
+git checkout main && git pull --ff-only
+git tag -a vX.Y.Z -m "Version X.Y.Z"
+git push origin vX.Y.Z
+
+# 3. Publish the GitHub release. The publish workflow uploads the package to PyPI.
+gh release create vX.Y.Z --title vX.Y.Z --notes "<CHANGELOG entry>"
 ```
+
+Tag only after the merge. A tag made on the PR branch can point at a commit that `main` does not contain.

@@ -89,12 +89,14 @@ class BaseRequestResponseHandler:
         return self._parse_error(exc)
 
     def process_httpx_error(self, exc: httpx.HTTPError) -> OttuPYResponse:
-        return self._parse_error(exc)
+        # 504, not 408: callers treat 4xx as permanent and 5xx as retryable.
+        status_code = 504 if isinstance(exc, httpx.TimeoutException) else 500
+        return self._parse_error(exc, status_code=status_code)
 
-    def _parse_error(self, exc: Exception) -> OttuPYResponse:
+    def _parse_error(self, exc: Exception, status_code: int = 500) -> OttuPYResponse:
         return OttuPYResponse(
             success=False,
-            status_code=500,
+            status_code=status_code,
             endpoint=self.path,
             response={},
             error={"detail": str(exc)},
