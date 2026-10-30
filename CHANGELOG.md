@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0 (unreleased)
+## 2.0.0 — October 30, 2026
 
 - Task #154780: Breaking: removed `calculate_subscription_hmac_signature`; `verify_signature` accepts the documented 18-field recipe only. It returns `False` instead of raising for a non-`str` or non-ASCII `signature` and for a lone surrogate in a signed value. It and `verify_ottu_signature_raw` also return `False` for an empty or non-`str` `webhook_key` (an empty key used to verify an attacker-signed payload).
 - Task #160605: added `verify_ottu_signature_raw`, which verifies the `Ottu-Signature: t=<unix>,v2=<hex>` header: HMAC-SHA256 over `t.` plus the exact raw request body.
