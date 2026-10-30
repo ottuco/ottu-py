@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.10.2 — October 30, 2026
+
+- Fix #160703: ordinary 4xx responses are logged at `WARNING` instead of `ERROR`, so expected answers (for example PSQ "no payment attempts") no longer become Sentry issues. Auth failures (401/403/407), request timeouts (408), 5xx and transport errors stay at `ERROR`.
+
+---
+
 ## 1.10.1 — June 12, 2026
 
 - Task #155509: Update README for PSQ + subscription HMAC verification (v1.9.0, v1.10.0)

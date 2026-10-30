@@ -112,7 +112,18 @@ class BaseRequestResponseHandler:
                 f"from {self.url} with args {self.kwargs}",
             )
         else:
-            logger.error(
+            # A 4xx is the server's answer about this request (e.g. PSQ "no payment
+            # attempts"); the caller decides whether it is a failure. Auth failures
+            # (401/403/407), request timeouts (408), 5xx and transport errors (which
+            # arrive as 5xx) mean something is broken.
+            status = response.status_code
+            level = (
+                logging.WARNING
+                if 400 <= status < 500 and status not in (401, 403, 407, 408)
+                else logging.ERROR
+            )
+            logger.log(
+                level,
                 f"Received {response.status_code} response "
                 f"from {self.url} with args {self.kwargs}. Error: {response.error}",
             )
