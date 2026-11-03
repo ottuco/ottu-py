@@ -208,3 +208,25 @@ V2_PAYMENT_SIGNATURE = (
 )
 V2_UNICODE_HEADER = f"t={WEBHOOK_TIMESTAMP},v2={V2_UNICODE_SIGNATURE}"
 V2_PAYMENT_HEADER = f"t={WEBHOOK_TIMESTAMP},v2={V2_PAYMENT_SIGNATURE}"
+
+# Connect v3 envelope, shaped like the published example. Every value is made up.
+V3_EVENT = {
+    "id": "evt_01JB3Q7Z5W8K2N4R6T9V0XCYDE",
+    "type": "payment.paid",
+    "created": "2026-10-21T13:40:05Z",
+    "version": 3,
+    "is_sandbox": False,
+    "merchant_id": "merchant.example.com",
+    "data": {
+        "payment": {
+            "amount": "1.000",
+            "currency_code": "KWD",
+            "extra": {"merchant_id": "merchant.example.com"},
+            "order_no": "order-0001",
+            "reference_number": "REF0001",
+            "result": "success",
+            "session_id": "0000000000000000000000000000000000000001",
+            "state": "paid",
+        }
+    },
+}

@@ -795,6 +795,33 @@ class WebhookReceiverView(WebhookViewAbstractView):
         )
 ```
 
+#### Reading v3 events
+
+On webhook format 3, every body is one event envelope. Verify the header on the raw bytes first, then parse:
+
+```python
+import json
+
+from ottu.utils.webhooks import InvalidOttuEvent, OttuEvent, verify_ottu_signature_raw
+
+if not verify_ottu_signature_raw(request.body, request.headers.get("Ottu-Signature"), webhook_key):
+    return HttpResponse(status=401)
+try:
+    event = OttuEvent.from_dict(json.loads(request.body))
+# A deeply nested body raises RecursionError, not ValueError.
+except (ValueError, RecursionError):  # InvalidOttuEvent is a ValueError
+    return HttpResponse(status=400)
+if event.merchant_id != MERCHANT_ID or event.is_sandbox != IS_SANDBOX:
+    return HttpResponse(status=400)  # signed, but meant for another merchant or environment
+if event.type == "payment.paid":
+    payment = event.data.get("payment")
+```
+
+`event.type` can be any string: Connect adds event types without a new ottu-py release. Ignore the types you do
+not handle. `event.id` is the same on every retry of one event; store it and skip an id you already processed.
+
+Formats 1 and 2 are unchanged: keep verifying them with `verify_signature` or the header check above.
+
 ### Miscellaneous
 
 ### Authentication

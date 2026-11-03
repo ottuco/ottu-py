@@ -3,6 +3,10 @@ from __future__ import annotations
 import hashlib
 import hmac
 import time
+from collections.abc import Mapping
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
 
 # The 18 flat top-level fields covered by the body ``signature``:
 # ``key+value`` concatenation, no delimiter, sorted by field name.
@@ -114,3 +118,72 @@ def calculate_hmac_signature(payload: dict, hmac_key: str) -> str:
     ]
     message = "".join(parts)
     return _hmac_digest(message, hmac_key)
+
+
+class InvalidOttuEvent(ValueError):
+    """The body is not a v3 webhook event envelope."""
+
+
+@dataclass
+class OttuEvent:
+    """A Connect v3 webhook event envelope.
+
+    Verify the ``Ottu-Signature`` header with :func:`verify_ottu_signature_raw`
+    first; this reader trusts nothing and checks the envelope shape only.
+    ``type`` is any string: new event types arrive without a new ottu-py release.
+    ``data`` is the resource dict as sent (``payment``, ``operation``...).
+    ``id`` is the same on every retry of one event: deduplicate on it.
+    """
+
+    id: str
+    type: str
+    created: datetime
+    version: int
+    is_sandbox: bool
+    merchant_id: str
+    data: dict[str, Any]
+
+    @classmethod
+    def from_dict(cls, raw: Mapping[str, Any]) -> OttuEvent:
+        """Build an event from the parsed JSON body.
+
+        Raises :class:`InvalidOttuEvent` if the body is not a v3 envelope.
+        """
+        if not isinstance(raw, Mapping):
+            raise InvalidOttuEvent("event must be a JSON object")
+        version = raw.get("version")
+        # bool is an int subclass: a JSON `true` must not pass as version 3.
+        if type(version) is not int or version != 3:
+            raise InvalidOttuEvent(f"version must be 3, got {version!r}")
+        for name in ("id", "type", "merchant_id"):
+            value = raw.get(name)
+            # A blank id would make every such event share one dedupe key.
+            if not isinstance(value, str) or not value.strip():
+                raise InvalidOttuEvent(f"{name} must be a non-empty string")
+        if not isinstance(raw.get("is_sandbox"), bool):
+            raise InvalidOttuEvent("is_sandbox must be a boolean")
+        if not isinstance(raw.get("data"), dict):
+            raise InvalidOttuEvent("data must be a JSON object")
+        return cls(
+            id=raw["id"],
+            type=raw["type"],
+            created=_parse_created(raw.get("created")),
+            version=3,
+            is_sandbox=raw["is_sandbox"],
+            merchant_id=raw["merchant_id"],
+            data=raw["data"],
+        )
+
+
+def _parse_created(value: object) -> datetime:
+    if not isinstance(value, str):
+        raise InvalidOttuEvent("created must be an ISO 8601 string")
+    try:
+        # Python 3.10's fromisoformat rejects a trailing "Z"; 3.11+ accepts it.
+        iso = value[:-1] + "+00:00" if value.endswith("Z") else value
+        created = datetime.fromisoformat(iso)
+    except ValueError as exc:
+        raise InvalidOttuEvent(f"created is not ISO 8601: {value!r}") from exc
+    if created.tzinfo is None:
+        raise InvalidOttuEvent("created must carry a UTC offset")
+    return created
