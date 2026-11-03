@@ -2,6 +2,7 @@ import copy
 import hashlib
 import hmac
 import json
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
@@ -9,6 +10,8 @@ import pytest
 from ottu.utils import webhooks
 from ottu.utils.webhooks import (
     _SIGNED_FIELDS,
+    InvalidOttuEvent,
+    OttuEvent,
     calculate_hmac_signature,
     verify_ottu_signature_raw,
     verify_signature,
@@ -22,6 +25,7 @@ from tests.fake_data import (
     V2_PAYMENT_SIGNATURE,
     V2_UNICODE_BODY,
     V2_UNICODE_HEADER,
+    V3_EVENT,
     WEBHOOK_KEY,
     WEBHOOK_TIMESTAMP,
 )
@@ -516,3 +520,89 @@ class TestConstantTimeCompare:
         spy = mocker.spy(webhooks.hmac, "compare_digest")
         assert _verify_v2(V2_PAYMENT_BODY) is True
         spy.assert_called_once()
+
+
+class TestOttuEventFromDict:
+    def test_parses_the_published_example(self):
+        event = OttuEvent.from_dict(json.loads(json.dumps(V3_EVENT)))
+        assert event == OttuEvent(
+            id="evt_01JB3Q7Z5W8K2N4R6T9V0XCYDE",
+            type="payment.paid",
+            created=datetime(2026, 10, 21, 13, 40, 5, tzinfo=timezone.utc),
+            version=3,
+            is_sandbox=False,
+            merchant_id="merchant.example.com",
+            data=V3_EVENT["data"],
+        )
+
+    def test_created_offset_parses(self):
+        raw = {**V3_EVENT, "created": "2026-10-21T16:40:05+03:00"}
+        assert OttuEvent.from_dict(raw).created == datetime(
+            2026, 10, 21, 13, 40, 5, tzinfo=timezone.utc
+        )
+
+    def test_unknown_type_is_accepted(self):
+        # New event types arrive without a reader release.
+        assert (
+            OttuEvent.from_dict({**V3_EVENT, "type": "token.created"}).type
+            == "token.created"
+        )
+
+    def test_unknown_top_level_key_is_ignored(self):
+        assert OttuEvent.from_dict({**V3_EVENT, "livemode": True}).id == V3_EVENT["id"]
+
+    @pytest.mark.parametrize("version", [1, 2, 4, "3", 3.0, None, True])
+    def test_version_not_3_rejected(self, version):
+        with pytest.raises(InvalidOttuEvent, match="version"):
+            OttuEvent.from_dict({**V3_EVENT, "version": version})
+
+    def test_flat_format_2_body_rejected(self):
+        # A format 1/2 body has no `version` key.
+        with pytest.raises(InvalidOttuEvent, match="version"):
+            OttuEvent.from_dict({**V3_EVENT["data"]["payment"], "signature": "ab"})
+
+    @pytest.mark.parametrize(
+        "field",
+        ["id", "type", "created", "version", "is_sandbox", "merchant_id", "data"],
+    )
+    def test_missing_field_rejected(self, field):
+        raw = {k: v for k, v in V3_EVENT.items() if k != field}
+        with pytest.raises(InvalidOttuEvent, match=field):
+            OttuEvent.from_dict(raw)
+
+    @pytest.mark.parametrize(
+        ("field", "value"),
+        [
+            ("id", 1),
+            ("type", None),
+            ("merchant_id", []),
+            ("is_sandbox", "false"),
+            ("data", []),
+            ("data", "x"),
+        ],
+    )
+    def test_wrong_type_rejected(self, field, value):
+        with pytest.raises(InvalidOttuEvent, match=field):
+            OttuEvent.from_dict({**V3_EVENT, field: value})
+
+    @pytest.mark.parametrize("field", ["id", "type", "merchant_id"])
+    @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
+    def test_blank_strings_rejected(self, field, value):
+        with pytest.raises(InvalidOttuEvent, match=field):
+            OttuEvent.from_dict({**V3_EVENT, field: value})
+
+    @pytest.mark.parametrize(
+        "created", ["2026-10-21T13:40:05", "yesterday", "", 1792417440]
+    )
+    def test_bad_created_rejected(self, created):
+        with pytest.raises(InvalidOttuEvent, match="created"):
+            OttuEvent.from_dict({**V3_EVENT, "created": created})
+
+    @pytest.mark.parametrize("raw", [[], "x", 3, None])
+    def test_non_object_rejected(self, raw):
+        with pytest.raises(InvalidOttuEvent, match="JSON object"):
+            OttuEvent.from_dict(raw)
+
+    def test_invalid_event_is_a_value_error(self):
+        # Callers that already catch ValueError keep working.
+        assert issubclass(InvalidOttuEvent, ValueError)

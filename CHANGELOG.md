@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.1.0 — November 3, 2026
+
+- Task #160605: added `OttuEvent.from_dict`, a typed reader for Connect v3 webhook events (`id`, `type`, `created`, `version`, `is_sandbox`, `merchant_id`, `data`). It raises `InvalidOttuEvent` (a `ValueError`) for any body that is not a version 3 envelope. Unknown event types are accepted. Blank `id`, `type` and `merchant_id` values are rejected. Formats 1 and 2 and the existing verifiers are unchanged.
+
+---
+
 ## 2.0.0 — October 30, 2026
 
 - Task #154780: Breaking: removed `calculate_subscription_hmac_signature`; `verify_signature` accepts the documented 18-field recipe only. It returns `False` instead of raising for a non-`str` or non-ASCII `signature` and for a lone surrogate in a signed value. It and `verify_ottu_signature_raw` also return `False` for an empty or non-`str` `webhook_key` (an empty key used to verify an attacker-signed payload).
