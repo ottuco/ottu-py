@@ -10,8 +10,14 @@ import pytest
 from ottu.utils import webhooks
 from ottu.utils.webhooks import (
     _SIGNED_FIELDS,
+    Actor,
+    Cancellation,
+    Connector,
     InvalidOttuEvent,
     OttuEvent,
+    PaymentCard,
+    SubscriptionObject,
+    Totals,
     calculate_hmac_signature,
     verify_ottu_signature_raw,
     verify_signature,
@@ -522,16 +528,26 @@ class TestConstantTimeCompare:
         spy.assert_called_once()
 
 
+NO_ACTOR = Actor(kind=None, id=None, first_name=None, last_name=None, email=None)
+
+
 class TestOttuEventFromDict:
     def test_parses_the_published_example(self):
         event = OttuEvent.from_dict(json.loads(json.dumps(V3_EVENT)))
         assert event == OttuEvent(
-            id="evt_01JB3Q7Z5W8K2N4R6T9V0XCYDE",
-            type="payment.paid",
-            created=datetime(2026, 10, 21, 13, 40, 5, tzinfo=timezone.utc),
+            id="evt_01JB5K2M8Q1R3T5V7X9Z0B2D4F",
+            event="payment.refunded",
+            created=datetime(2026, 11, 5, 8, 0, 3, tzinfo=timezone.utc),
             version=3,
             is_sandbox=False,
-            merchant_id="merchant.example.com",
+            merchant_id="merchant.ottu.net",
+            initiator=Actor(
+                kind="user",
+                id=12,
+                first_name="Sara",
+                last_name="Ops",
+                email="ops@merchant.com",
+            ),
             data=V3_EVENT["data"],
         )
 
@@ -541,11 +557,56 @@ class TestOttuEventFromDict:
             2026, 10, 21, 13, 40, 5, tzinfo=timezone.utc
         )
 
-    def test_unknown_type_is_accepted(self):
-        # New event types arrive without a reader release.
+    def test_unknown_event_is_accepted(self):
+        # New events arrive without a reader release.
         assert (
-            OttuEvent.from_dict({**V3_EVENT, "type": "token.created"}).type
+            OttuEvent.from_dict({**V3_EVENT, "event": "token.created"}).event
             == "token.created"
+        )
+
+    def test_body_with_type_and_no_event_rejected(self):
+        # A 2.1.0-era envelope: `type` was renamed to `event` (#160599 R2).
+        raw = {k: v for k, v in V3_EVENT.items() if k != "event"} | {
+            "type": "payment.paid"
+        }
+        with pytest.raises(InvalidOttuEvent, match="event must be a non-empty string"):
+            OttuEvent.from_dict(raw)
+
+    @pytest.mark.parametrize("initiator", [None, "user", []])
+    def test_initiator_missing_or_not_an_object_reads_as_empty_actor(self, initiator):
+        raw = {**V3_EVENT, "initiator": initiator}
+        assert OttuEvent.from_dict(raw).initiator == NO_ACTOR
+
+    def test_initiator_absent_reads_as_empty_actor(self):
+        raw = {k: v for k, v in V3_EVENT.items() if k != "initiator"}
+        assert OttuEvent.from_dict(raw).initiator == NO_ACTOR
+
+    @pytest.mark.parametrize(
+        ("initiator", "expected"),
+        [
+            (
+                {"kind": "system"},
+                Actor(
+                    kind="system", id=None, first_name=None, last_name=None, email=None
+                ),
+            ),
+            (
+                {**V3_EVENT["initiator"], "role": "x"},
+                Actor(
+                    kind="user",
+                    id=12,
+                    first_name="Sara",
+                    last_name="Ops",
+                    email="ops@merchant.com",
+                ),
+            ),
+        ],
+        ids=["partial-keys", "unknown-key-ignored"],
+    )
+    def test_initiator_partial_or_unknown_keys(self, initiator, expected):
+        assert (
+            OttuEvent.from_dict({**V3_EVENT, "initiator": initiator}).initiator
+            == expected
         )
 
     def test_unknown_top_level_key_is_ignored(self):
@@ -559,11 +620,11 @@ class TestOttuEventFromDict:
     def test_flat_format_2_body_rejected(self):
         # A format 1/2 body has no `version` key.
         with pytest.raises(InvalidOttuEvent, match="version"):
-            OttuEvent.from_dict({**V3_EVENT["data"]["payment"], "signature": "ab"})
+            OttuEvent.from_dict({**V3_EVENT["data"], "signature": "ab"})
 
     @pytest.mark.parametrize(
         "field",
-        ["id", "type", "created", "version", "is_sandbox", "merchant_id", "data"],
+        ["id", "event", "created", "version", "is_sandbox", "merchant_id", "data"],
     )
     def test_missing_field_rejected(self, field):
         raw = {k: v for k, v in V3_EVENT.items() if k != field}
@@ -574,7 +635,7 @@ class TestOttuEventFromDict:
         ("field", "value"),
         [
             ("id", 1),
-            ("type", None),
+            ("event", None),
             ("merchant_id", []),
             ("is_sandbox", "false"),
             ("data", []),
@@ -585,7 +646,7 @@ class TestOttuEventFromDict:
         with pytest.raises(InvalidOttuEvent, match=field):
             OttuEvent.from_dict({**V3_EVENT, field: value})
 
-    @pytest.mark.parametrize("field", ["id", "type", "merchant_id"])
+    @pytest.mark.parametrize("field", ["id", "event", "merchant_id"])
     @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
     def test_blank_strings_rejected(self, field, value):
         with pytest.raises(InvalidOttuEvent, match=field):
@@ -606,3 +667,218 @@ class TestOttuEventFromDict:
     def test_invalid_event_is_a_value_error(self):
         # Callers that already catch ValueError keep working.
         assert issubclass(InvalidOttuEvent, ValueError)
+
+
+SUBSCRIPTION_CREATED = {
+    **{k: v for k, v in V3_EVENT.items() if k not in ("event", "data", "initiator")},
+    "event": "subscription.created",
+    "initiator": {
+        "kind": "system",
+        "id": None,
+        "first_name": None,
+        "last_name": None,
+        "email": None,
+    },
+    "data": {
+        "subscription_id": "sub_1eQuvS6CkxA8EzDEf6nJ6uLi",
+        "status": "pending_setup",
+        "order_no": "INV-1042",
+        "plan_name": "Gold",
+        "description": None,
+        "language": "en",
+        "amount": "10.000",
+        "first_payment_amount": "10.000",
+        "currency": "KWD",
+        "billing_anchor_day": 5,
+        "retry_count": 3,
+        "start_date": "2026-11-05",
+        "end_date": None,
+        "next_billing_date": None,
+        "customer": {
+            "id": "cus_88",
+            "email": "ali@example.com",
+            "first_name": "Ali",
+            "last_name": "Hassan",
+            "phone": None,
+            "phone_2": None,
+            "birthdate": None,
+        },
+        "card": {
+            "number": None,
+            "brand": None,
+            "scheme": None,
+            "bin": None,
+            "expiry_month": None,
+            "expiry_year": None,
+            "name_on_card": None,
+            "token": None,
+            "cvv_required": None,
+            "is_preferred": None,
+            "agreements": [],
+        },
+        "agreement": {
+            "id": "agr_1",
+            "type": "recurring",
+            "frequency": "monthly",
+            "amount_variability": "fixed",
+            "cycle_interval_days": 30,
+            "total_cycles": None,
+            "start_date": "2026-11-05",
+            "expiry_date": None,
+            "max_amount_per_cycle": None,
+            "seller": {"name": None, "short_name": None, "category_code": None},
+        },
+        "cancellation": {
+            "at_period_end": False,
+            "cancel_date": None,
+            "canceled_at": None,
+            "canceled_by": {
+                "kind": None,
+                "id": None,
+                "first_name": None,
+                "last_name": None,
+                "email": None,
+            },
+            "reason": None,
+            "note": None,
+        },
+        "setup_session_id": "4f6c1e0b9a2d",
+        "latest_session_id": "4f6c1e0b9a2d",
+        "created_by": {
+            "kind": "system",
+            "id": None,
+            "first_name": None,
+            "last_name": None,
+            "email": None,
+        },
+        "created_at": "2026-11-05T08:00:00Z",
+        "updated_at": "2026-11-05T08:00:00Z",
+        "status_changed_at": None,
+    },
+}
+
+
+class TestOttuEventViews:
+    def test_payment_view_reads_the_typed_fields(self):
+        payment = OttuEvent.from_dict(V3_EVENT).payment
+        assert payment.status == "refunded"
+        assert payment.operation == "refund"
+        assert payment.connector.reference_number == "R7TQ1X"
+        assert payment.connector.code == "ottu-pg-live"
+        assert payment.totals.refunded == "6.000"
+        assert payment.card.token is None
+        assert payment.created_by.kind == "api_key"
+        assert payment.customer == V3_EVENT["data"]["customer"]
+
+    def test_payment_view_is_none_for_a_subscription_event(self):
+        event = OttuEvent.from_dict(SUBSCRIPTION_CREATED)
+        assert event.payment is None
+        assert event.subscription is not None
+
+    def test_subscription_view_reads_the_typed_fields(self):
+        sub = OttuEvent.from_dict(SUBSCRIPTION_CREATED).subscription
+        assert sub == SubscriptionObject(
+            **{
+                **SUBSCRIPTION_CREATED["data"],
+                "card": PaymentCard(**{**SUBSCRIPTION_CREATED["data"]["card"]}),
+                "cancellation": Cancellation(
+                    **{
+                        **SUBSCRIPTION_CREATED["data"]["cancellation"],
+                        "canceled_by": NO_ACTOR,
+                    }
+                ),
+                "created_by": Actor(
+                    kind="system", id=None, first_name=None, last_name=None, email=None
+                ),
+            }
+        )
+
+    @pytest.mark.parametrize("cancellation", [None, "x", [], "absent"])
+    def test_non_object_cancellation_reads_as_empty(self, cancellation):
+        data = {**SUBSCRIPTION_CREATED["data"], "cancellation": cancellation}
+        if cancellation == "absent":
+            del data["cancellation"]
+        sub = OttuEvent.from_dict({**SUBSCRIPTION_CREATED, "data": data}).subscription
+        assert sub.cancellation == Cancellation(
+            at_period_end=None,
+            cancel_date=None,
+            canceled_at=None,
+            canceled_by=NO_ACTOR,
+            reason=None,
+            note=None,
+        )
+
+    def test_cancellation_canceled_by_is_an_actor(self):
+        canceled_by = {
+            "kind": "customer",
+            "id": "cus_88",
+            "first_name": "Ali",
+            "last_name": "Hassan",
+            "email": "ali@example.com",
+        }
+        cancellation = {
+            **SUBSCRIPTION_CREATED["data"]["cancellation"],
+            "canceled_by": canceled_by,
+        }
+        data = {**SUBSCRIPTION_CREATED["data"], "cancellation": cancellation}
+        sub = OttuEvent.from_dict({**SUBSCRIPTION_CREATED, "data": data}).subscription
+        assert sub.cancellation.canceled_by == Actor(**canceled_by)
+        assert isinstance(sub.cancellation.canceled_by, Actor)
+
+    def test_neither_view_for_another_family(self):
+        event = OttuEvent.from_dict(
+            {**V3_EVENT, "event": "webhook.ping", "data": {"endpoint": {}}}
+        )
+        assert (event.payment, event.subscription) == (None, None)
+
+    def test_null_nested_objects_read_as_empty(self):
+        data = {
+            **V3_EVENT["data"],
+            "card": None,
+            "connector": None,
+            "totals": None,
+            "created_by": None,
+        }
+        payment = OttuEvent.from_dict({**V3_EVENT, "data": data}).payment
+        assert payment.card == PaymentCard(
+            **{f: None for f in PaymentCard.__dataclass_fields__}
+        )
+        assert payment.connector == Connector(
+            **{f: None for f in Connector.__dataclass_fields__}
+        )
+        assert payment.totals == Totals(
+            **{f: None for f in Totals.__dataclass_fields__}
+        )
+        assert payment.created_by == NO_ACTOR
+
+    @pytest.mark.parametrize(
+        ("key", "value", "cls"),
+        [
+            ("connector", [], Connector),
+            ("totals", "x", Totals),
+            ("card", [1], PaymentCard),
+        ],
+    )
+    def test_non_object_nested_value_reads_as_empty(self, key, value, cls):
+        data = {**V3_EVENT["data"], key: value}
+        payment = OttuEvent.from_dict({**V3_EVENT, "data": data}).payment
+        assert getattr(payment, key) == cls(
+            **{f: None for f in cls.__dataclass_fields__}
+        )
+
+    def test_missing_data_keys_read_as_none(self):
+        payment = OttuEvent.from_dict({**V3_EVENT, "data": {"status": "paid"}}).payment
+        assert (payment.status, payment.session_id, payment.connector.code) == (
+            "paid",
+            None,
+            None,
+        )
+
+    def test_unknown_data_key_is_kept_in_data(self):
+        raw = {
+            **SUBSCRIPTION_CREATED,
+            "data": {**SUBSCRIPTION_CREATED["data"], "future_key": 1},
+        }
+        event = OttuEvent.from_dict(raw)
+        assert event.data["future_key"] == 1
+        assert event.subscription.subscription_id == "sub_1eQuvS6CkxA8EzDEf6nJ6uLi"
