@@ -813,12 +813,16 @@ except (ValueError, RecursionError):  # InvalidOttuEvent is a ValueError
     return HttpResponse(status=400)
 if event.merchant_id != MERCHANT_ID or event.is_sandbox != IS_SANDBOX:
     return HttpResponse(status=400)  # signed, but meant for another merchant or environment
-if event.type == "payment.paid":
-    payment = event.data.get("payment")
+if event.event == "payment.paid":
+    payment = event.payment  # typed: payment.status, payment.connector.reference_number, payment.totals.paid
+elif event.event.startswith("subscription."):
+    subscription = event.subscription  # typed: subscription.subscription_id, subscription.status
 ```
 
-`event.type` can be any string: Connect adds event types without a new ottu-py release. Ignore the types you do
+`event.event` can be any string: Connect adds events without a new ottu-py release. Ignore the events you do
 not handle. `event.id` is the same on every retry of one event; store it and skip an id you already processed.
+`event.data` is the object itself, as sent; `event.payment` and `event.subscription` read it into typed fields.
+A key that Connect does not send reads as `None`. `event.initiator` says who caused the event.
 
 Formats 1 and 2 are unchanged: keep verifying them with `verify_signature` or the header check above.
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0.0 — UNRELEASED
+
+- Task #160605: Breaking: `OttuEvent` reads the final v3 envelope (#160599). The key `type` is now `event`
+  (`OttuEvent.type` is removed), and `initiator` is read into `Actor(kind, id, first_name, last_name, email)`.
+  The `OttuEvent(...)` constructor now requires `initiator`, placed before `data`.
+  New public dataclasses: `PaymentEvent`, `SubscriptionObject`, `PaymentCard`, `Connector`, `Totals` and `Cancellation`.
+  `data` is the object itself, no longer keyed by resource (`data.payment`, `data.operation`).
+  `OttuEvent.payment` and `OttuEvent.subscription` give typed access, with `connector`, `totals` and `card`.
+  Unknown keys in `data` are kept, and missing keys read as `None`. Signature verification is unchanged.
+
+---
+
 ## 2.1.0 — November 3, 2026
 
 - Task #160605: added `OttuEvent.from_dict`, a typed reader for Connect v3 webhook events (`id`, `type`, `created`, `version`, `is_sandbox`, `merchant_id`, `data`). It raises `InvalidOttuEvent` (a `ValueError`) for any body that is not a version 3 envelope. Unknown event types are accepted. Blank `id`, `type` and `merchant_id` values are rejected. Formats 1 and 2 and the existing verifiers are unchanged.

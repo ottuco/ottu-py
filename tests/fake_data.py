@@ -186,9 +186,7 @@ SIGNED_PAYLOAD_EXTENDED_SIGNATURE = (
 # bytes because v2 signs bytes, not a parsed payload.
 # ---------------------------------------------------------------------------
 
-V2_UNICODE_BODY = '{"id":"evt_1","data":{"customer_first_name":"Zoë احمد"}}'.encode(
-    "utf-8"
-)
+V2_UNICODE_BODY = '{"id":"evt_1","data":{"customer_first_name":"Zoë احمد"}}'.encode()
 V2_UNICODE_SIGNATURE = (
     "b230321937edb54b51b91f65d544aa8039e413f0a8e034e59acb9b13e11e7d4e"
 )
@@ -209,24 +207,128 @@ V2_PAYMENT_SIGNATURE = (
 V2_UNICODE_HEADER = f"t={WEBHOOK_TIMESTAMP},v2={V2_UNICODE_SIGNATURE}"
 V2_PAYMENT_HEADER = f"t={WEBHOOK_TIMESTAMP},v2={V2_PAYMENT_SIGNATURE}"
 
-# Connect v3 envelope, shaped like the published example. Every value is made up.
+# The #160599 example body: `payment.refunded`, second partial refund of 3.000 on a 10.000 KWD payment.
 V3_EVENT = {
-    "id": "evt_01JB3Q7Z5W8K2N4R6T9V0XCYDE",
-    "type": "payment.paid",
-    "created": "2026-10-21T13:40:05Z",
+    "id": "evt_01JB5K2M8Q1R3T5V7X9Z0B2D4F",
+    "event": "payment.refunded",
+    "created": "2026-11-05T08:00:03Z",
     "version": 3,
     "is_sandbox": False,
-    "merchant_id": "merchant.example.com",
+    "merchant_id": "merchant.ottu.net",
+    "initiator": {
+        "kind": "user",
+        "id": 12,
+        "first_name": "Sara",
+        "last_name": "Ops",
+        "email": "ops@merchant.com",
+    },
     "data": {
-        "payment": {
-            "amount": "1.000",
-            "currency_code": "KWD",
-            "extra": {"merchant_id": "merchant.example.com"},
-            "order_no": "order-0001",
-            "reference_number": "REF0001",
-            "result": "success",
-            "session_id": "0000000000000000000000000000000000000001",
-            "state": "paid",
-        }
+        "session_id": "4f6c1e0b9a2d",
+        "order_no": "INV-1042",
+        "payment_type": "one_off",
+        "language": "en",
+        "amount": "10.000",
+        "currency": "KWD",
+        "status": "refunded",
+        "operation": "refund",
+        "processed_at": "2026-11-05T08:00:02Z",
+        "result": "success",
+        "message": "Refund processed successfully",
+        "channel": None,
+        "form_of_payment": None,
+        "card": {
+            "number": None,
+            "brand": None,
+            "scheme": None,
+            "bin": None,
+            "expiry_month": None,
+            "expiry_year": None,
+            "name_on_card": None,
+            "token": None,
+            "cvv_required": None,
+            "is_preferred": None,
+            "agreements": [],
+        },
+        "connector": {
+            "code": "ottu-pg-live",
+            "identifier": "ottu_pg",
+            "processor": "mpgs",
+            "reference_number": "R7TQ1X",
+            "currency": "KWD",
+            "amount": "3.000",
+            "exchange_rate": "1",
+            "fee": "0.000",
+            "total": "3.000",
+            "params": {
+                "rrn": {"label": {"en": "RRN", "ar": "..."}, "value": "531012345702"}
+            },
+            "responses": [
+                {
+                    "step": "refund",
+                    "at": "2026-11-05T08:00:02Z",
+                    "body": {"result": "SUCCESS"},
+                }
+            ],
+        },
+        "totals": {
+            "paid": "10.000",
+            "settled": "10.000",
+            "refunded": "6.000",
+            "refund_pending": "0.000",
+            "voided": "0.000",
+            "remaining": "0.000",
+        },
+        "customer": {
+            "id": "cus_88",
+            "email": "ali@example.com",
+            "first_name": "Ali",
+            "last_name": "Hassan",
+            "phone": "96550000000",
+            "phone_2": None,
+            "birthdate": "1990-05-01",
+        },
+        "billing_address": {
+            "line1": "Block 3, Street 12",
+            "line2": None,
+            "city": "Kuwait City",
+            "state": None,
+            "country": "KW",
+            "postal_code": None,
+        },
+        "shipping_address": {
+            "first_name": None,
+            "last_name": None,
+            "email": None,
+            "phone": None,
+            "line1": None,
+            "line2": None,
+            "city": None,
+            "state": None,
+            "country": None,
+            "postal_code": None,
+        },
+        "agreement": {
+            "id": None,
+            "type": None,
+            "frequency": None,
+            "amount_variability": None,
+            "cycle_interval_days": None,
+            "total_cycles": None,
+            "start_date": None,
+            "expiry_date": None,
+            "max_amount_per_cycle": None,
+            "seller": {"name": None, "short_name": None, "category_code": None},
+        },
+        "wallets": [],
+        "extra": {"cart_id": "c-7781"},
+        "created_by": {
+            "kind": "api_key",
+            "id": None,
+            "first_name": None,
+            "last_name": None,
+            "email": None,
+        },
+        "created_at": "2026-11-04T10:11:12Z",
+        "updated_at": "2026-11-05T08:00:02Z",
     },
 }
