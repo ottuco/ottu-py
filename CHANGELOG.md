@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.0.0 — UNRELEASED
+## 3.0.0 — November 5, 2026
 
 - Task #160605: Breaking: `OttuEvent` reads the final v3 envelope (#160599). The key `type` is now `event`
   (`OttuEvent.type` is removed), and `initiator` is read into `Actor(kind, id, first_name, last_name, email)`.
