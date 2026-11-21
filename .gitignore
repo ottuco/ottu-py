@@ -167,3 +167,6 @@ local_*/
 # Local development / incident docs (not part of the SDK)
 docs/
 .serena/
+
+# Personal Claude Code settings (never commit)
+.claude/settings.local.json
