@@ -1,9 +1,9 @@
 # Builds the package when a release is published and uploads it to PyPI.
 #
 # The build job has no credentials. The publish jobs run in the `pypi` GitHub
-# environment (#161438). They are the only jobs that can publish only after the
-# switch to Trusted Publishing and the removal of PYPI_API_TOKEN: until then the
-# token is a repository secret that any workflow with write access can read.
+# environment (#161438). That environment only becomes the sole publish path
+# after the switch to Trusted Publishing and the removal of PYPI_API_TOKEN: until
+# then the token is a repository secret that any workflow with write access can read.
 # The "release commit is on main" check below guards against mistakes; the real
 # controls are the `pypi` environment rules (tag pattern v*, required reviewer)
 # and a tag ruleset on v*.
