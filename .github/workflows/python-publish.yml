@@ -1,17 +1,20 @@
 # Builds the package when a release is published and uploads it to PyPI.
 #
-# The build job has no credentials. The publish job runs in the `pypi` GitHub
-# environment (#161438). It is the only job that can publish only after the
+# The build job has no credentials. The publish jobs run in the `pypi` GitHub
+# environment (#161438). They are the only jobs that can publish only after the
 # switch to Trusted Publishing and the removal of PYPI_API_TOKEN: until then the
 # token is a repository secret that any workflow with write access can read.
 # The "release commit is on main" check below guards against mistakes; the real
 # controls are the `pypi` environment rules (tag pattern v*, required reviewer)
 # and a tag ruleset on v*.
 #
-# Publishing mode is chosen by the repository variable PYPI_TRUSTED_PUBLISHING:
-#   unset or not "true": legacy, uploads with the PYPI_API_TOKEN secret (as before).
-#   "true": PyPI Trusted Publishing (OIDC), no token. Switch on only after the
-#           trusted publisher exists on PyPI (see the PR description).
+# Publishing mode is chosen by the repository variable PYPI_TRUSTED_PUBLISHING,
+# one job per mode so that only the trusted job can ask for an OIDC token:
+#   unset or not "true": publish-legacy, uploads with the PYPI_API_TOKEN secret
+#           (as before), no id-token permission.
+#   "true": publish-trusted, PyPI Trusted Publishing (OIDC), no token. Switch on
+#           only after the trusted publisher exists on PyPI (see the PR description).
+# The job not picked is skipped and never asks for the `pypi` environment.
 
 name: Upload Python Package
 
@@ -64,15 +67,16 @@ jobs:
         path: dist/
         if-no-files-found: error
 
-  publish:
+  publish-trusted:
     needs: build
+    if: ${{ vars.PYPI_TRUSTED_PUBLISHING == 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 10
     environment:
       name: pypi
       url: https://pypi.org/project/ottu-py/
     permissions:
-      id-token: write  # Trusted Publishing only; never used in legacy mode
+      id-token: write  # Trusted Publishing: PyPI exchanges this OIDC token
     steps:
     - name: Get the built files
       uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -81,13 +85,28 @@ jobs:
         path: dist/
 
     - name: Publish package (trusted publishing)
-      if: ${{ vars.PYPI_TRUSTED_PUBLISHING == 'true' }}
       uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
       with:
         verbose: true
 
+  # Remove this job after the switch (step 6 on #161438).
+  publish-legacy:
+    needs: build
+    if: ${{ vars.PYPI_TRUSTED_PUBLISHING != 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/project/ottu-py/
+    permissions: {}  # token upload; no OIDC token, as on main today
+    steps:
+    - name: Get the built files
+      uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+      with:
+        name: dist
+        path: dist/
+
     - name: Publish package (legacy token, remove after the switch)
-      if: ${{ vars.PYPI_TRUSTED_PUBLISHING != 'true' }}
       uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
       with:
         user: __token__
